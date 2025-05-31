@@ -3,52 +3,151 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Users, Bed, Eye, Snowflake, Wifi, Coffee } from "lucide-react"
+import { Users, Bed, Eye, Snowflake, Wifi, Coffee, Tv, Wind, Scissors, Droplet, ShowerHead, KeyRound, Refrigerator } from "lucide-react"
 
 export default function RoomsPage() {
   const rooms = [
     {
-      id: 1,
-      name: "Tek Kişilik Oda",
-      price: "₺900",
-      capacity: 2,
-      bedType: "Tek Kişilik Yatak",
-      view: "Deniz Manzarası",
-      features: ["Klima", "Minibar", "Balkon", "Jakuzi"],
-      description: "Panoramik deniz manzaralı lüks suit odamız. Geniş balkon ve jakuzi ile unutulmaz bir konaklama.",
+      id: 201,
+      name: "201 Numaralı Oda",
+      price: "₺3000",
+      capacity: 6,
+      bedType: "Ranza Sistemi",
+      view: "Şehir Manzarası",
+      features: ["Klima", "TV", "WiFi", "Özel Banyo", "Havlu & Terlik", "Saç Kurutma", "Şampuan", "Isıtıcı"],
+      description: "6 kişilik, özel banyolu, ranza sistemine sahip ve kalabalık gruplar için uygun ferah odamız.",
       images: ["/227667008.jpg?height=400&width=600"],
     },
     {
-      id: 2,
-      name: "Çift Kişilik Oda",
-      price: "₺1800",
-      capacity: 3,
-      bedType: "1 Çift + 1 Tek Yatak",
+      id: 202,
+      name: "202 Numaralı Oda",
+      price: "₺3000",
+      capacity: 6,
+      bedType: "Ranza Sistemi",
       view: "Bahçe Manzarası",
-      features: ["Klima", "Balkon", "Minibar"],
-      description: "Yeşil bahçemize bakan ferah odamız. Aileler için ideal, rahat ve konforlu.",
+      features: ["Klima", "TV", "WiFi", "Özel Banyo", "Havlu & Terlik", "Saç Kurutma", "Şampuan", "Isıtıcı"],
+      description: "6 kişilik, özel banyolu, ranza sistemine sahip ve kalabalık gruplar için uygun ferah odamız.",
       images: ["/253575921.jpg?height=400&width=600"],
     },
     {
-      id: 3,
-      name: "Üç Kişilik Oda",
-      price: "₺2700",
-      capacity: 2,
-      bedType: "Çift Kişilik Yatak",
+      id: 203,
+      name: "203 Numaralı Oda",
+      price: "₺1500",
+      capacity: 3,
+      bedType: "Tek Kişilik Yataklar",
       view: "Şehir Manzarası",
-      features: ["Klima", "Minibar"],
-      description: "Konforlu ve ekonomik seçeneğimiz. Tüm temel ihtiyaçlarınızı karşılayan standart odamız.",
+      features: ["Klima", "TV", "WiFi", "Ortak Banyo", "Havlu & Terlik", "Saç Kurutma", "Şampuan", "Isıtıcı"],
+      description: "3 kişilik, 204 numaralı oda ile ortak banyoyu paylaşan ekonomik konaklama seçeneği.",
       images: ["/227667320.jpg?height=400&width=600"],
     },
     {
-      id: 4,
-      name: "Aile Odası",
-      price: "₺900",
-      capacity: 4,
-      bedType: "2 Çift Kişilik Yatak",
+      id: 204,
+      name: "204 Numaralı Oda",
+      price: "₺1000",
+      capacity: 2,
+      bedType: "Çift Kişilik Yatak",
       view: "Bahçe Manzarası",
-      features: ["Klima", "Balkon", "Minibar", "Oturma Alanı"],
-      description: "Geniş aileler için tasarlanmış ferah odamız. İki ayrı yatak odası ve oturma alanı.",
+      features: ["Klima", "TV", "WiFi", "Ortak Banyo", "Havlu & Terlik", "Saç Kurutma", "Şampuan", "Isıtıcı"],
+      description: "2 kişilik, 203 numaralı oda ile ortak banyoyu paylaşan ekonomik konaklama seçeneği.",
+      images: ["/253582329.jpg?height=400&width=600"],
+    },
+    {
+      id: 205,
+      name: "205 Numaralı Oda",
+      price: "₺1200",
+      capacity: 2,
+      bedType: "Çift Kişilik Yatak",
+      view: "Şehir Manzarası",
+      features: ["Klima", "TV", "WiFi", "Özel Banyo", "Havlu & Terlik", "Saç Kurutma", "Şampuan", "Isıtıcı"],
+      description: "Çiftler için konforlu, sade ve ferah, özel banyolu odamız.",
+      images: ["/253582329.jpg?height=400&width=600"],
+    },
+    {
+      id: 301,
+      name: "301 Numaralı Oda",
+      price: "₺2000",
+      capacity: 4,
+      bedType: "Tek Kişilik Yataklar",
+      view: "Şehir Manzarası",
+      features: ["Klima", "TV", "WiFi", "Ortak Banyo", "Havlu & Terlik", "Saç Kurutma", "Şampuan", "Isıtıcı"],
+      description: "4 kişilik ve ortak banyolu; arkadaş grupları için ideal odamız.",
+      images: ["/227667008.jpg?height=400&width=600"],
+    },
+    {
+      id: 302,
+      name: "302 Numaralı Oda",
+      price: "₺1800",
+      capacity: 3,
+      bedType: "Tek Kişilik Yataklar",
+      view: "Bahçe Manzarası",
+      features: ["Klima", "TV", "WiFi", "Özel Banyo", "Havlu & Terlik", "Saç Kurutma", "Şampuan", "Isıtıcı"],
+      description: "3 kişilik özel banyolu, rahat ve samimi bir ortam sunan odamız.",
+      images: ["/253575921.jpg?height=400&width=600"],
+    },
+    {
+      id: 303,
+      name: "303 Numaralı Oda",
+      price: "₺1500",
+      capacity: 3,
+      bedType: "Tek Kişilik Yataklar",
+      view: "Şehir Manzarası",
+      features: ["Klima", "TV", "WiFi", "Ortak Banyo", "Havlu & Terlik", "Saç Kurutma", "Şampuan", "Isıtıcı"],
+      description: "3 kişilik ortak banyolu, sade dekorasyonlu ve ekonomik konaklama seçeneğimiz.",
+      images: ["/227667320.jpg?height=400&width=600"],
+    },
+    {
+      id: 304,
+      name: "304 Numaralı Oda",
+      price: "₺1000",
+      capacity: 2,
+      bedType: "Çift Kişilik Yatak",
+      view: "Bahçe Manzarası",
+      features: ["Klima", "TV", "WiFi", "Ortak Banyo", "Havlu & Terlik", "Saç Kurutma", "Şampuan", "Isıtıcı"],
+      description: "2 kişilik ortak banyolu, sade ve dinlendirici odamız.",
+      images: ["/253582329.jpg?height=400&width=600"],
+    },
+    {
+      id: 305,
+      name: "305 Numaralı Oda",
+      price: "₺1200",
+      capacity: 2,
+      bedType: "Çift Kişilik Yatak",
+      view: "Şehir Manzarası",
+      features: ["Klima", "TV", "WiFi", "Özel Banyo", "Havlu & Terlik", "Saç Kurutma", "Şampuan", "Isıtıcı"],
+      description: "Çiftler için konforlu, sade ve ferah, özel banyolu odamız.",
+      images: ["/227667008.jpg?height=400&width=600"],
+    },
+    {
+      id: 403,
+      name: "403 Numaralı Oda",
+      price: "₺1500",
+      capacity: 3,
+      bedType: "Tek Kişilik Yataklar",
+      view: "Şehir Manzarası",
+      features: ["Klima", "TV", "WiFi", "Ortak Banyo", "Havlu & Terlik", "Saç Kurutma", "Şampuan", "Isıtıcı"],
+      description: "3 kişilik ortak banyolu, sade dekorasyonlu ve ekonomik konaklama seçeneğimiz.",
+      images: ["/253575921.jpg?height=400&width=600"],
+    },
+    {
+      id: 404,
+      name: "404 Numaralı Oda",
+      price: "₺1000",
+      capacity: 2,
+      bedType: "Çift Kişilik Yatak",
+      view: "Bahçe Manzarası",
+      features: ["Klima", "TV", "WiFi", "Ortak Banyo", "Havlu & Terlik", "Saç Kurutma", "Şampuan", "Isıtıcı"],
+      description: "2 kişilik ortak banyolu, sade ve dinlendirici odamız.",
+      images: ["/227667320.jpg?height=400&width=600"],
+    },
+    {
+      id: 405,
+      name: "405 Numaralı Oda",
+      price: "₺1200",
+      capacity: 2,
+      bedType: "Çift Kişilik Yatak",
+      view: "Şehir Manzarası",
+      features: ["Klima", "TV", "WiFi", "Özel Banyo", "Havlu & Terlik", "Saç Kurutma", "Şampuan", "Isıtıcı"],
+      description: "Çiftler için konforlu, sade ve ferah, özel banyolu odamız.",
       images: ["/253582329.jpg?height=400&width=600"],
     },
   ]
@@ -57,10 +156,30 @@ export default function RoomsPage() {
     switch (feature) {
       case "Klima":
         return <Snowflake className="w-4 h-4" />
-      case "Wifi":
+      case "TV":
+        return <Tv className="w-4 h-4" />
+      case "WiFi":
         return <Wifi className="w-4 h-4" />
+      case "Havlu & Terlik":
+        return <Wind className="w-4 h-4" />
+      case "Saç Kurutma":
+        return <Wind className="w-4 h-4" />
+      case "Şampuan":
+        return <Droplet className="w-4 h-4" />
+      case "Isıtıcı":
+        return <Wind className="w-4 h-4" />
+      case "Kasa":
+        return <KeyRound className="w-4 h-4" />
       case "Minibar":
-        return <Coffee className="w-4 h-4" />
+        return <Refrigerator className="w-4 h-4" />
+      case "Balkon":
+        return <Eye className="w-4 h-4" />
+      case "Oturma Alanı":
+        return <Users className="w-4 h-4" />
+      case "Özel Banyo":
+        return <ShowerHead className="w-4 h-4" />
+      case "Ortak Banyo":
+        return <ShowerHead className="w-4 h-4" />
       default:
         return null
     }

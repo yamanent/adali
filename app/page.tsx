@@ -2,7 +2,7 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Star, Wifi, Coffee, MapPin, Car, Utensils, Waves } from "lucide-react"
+import { Star, Wifi, Coffee, MapPin, Car, Tv, Waves } from "lucide-react"
 
 export default function HomePage() {
   const services = [
@@ -10,7 +10,7 @@ export default function HomePage() {
     { icon: Coffee, title: "Kahvaltı Dahil", description: "Ev yapımı lezzetler" },
     { icon: Waves, title: "Tarihi Yerleri Keşfet", description: "Tarihe Çok Yakın" },
     { icon: Car, title: "Ücretsiz Otopark", description: "Güvenli park alanı" },
-    { icon: Utensils, title: "Restoran", description: "Yerel lezzetler" },
+    { icon: Tv, title: "Televizyon", description: "Tüm odalarda" },
     { icon: MapPin, title: "Merkezi Konum", description: "Her yere yakın" },
   ]
 
@@ -77,9 +77,7 @@ export default function HomePage() {
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-4xl md:text-5xl font-bold text-sage-800 mb-6">Hoş Geldiniz</h2>
             <p className="text-lg text-sage-600 leading-relaxed mb-8">
-              1995 yılından beri misafirlerimizi ağırlayan pansiyonumuz, denizin hemen kenarında yer alıyor. Aile
-              işletmemizde, sıcak bir atmosfer ve samimi hizmet anlayışıyla unutulmaz anılar biriktirmenizi sağlıyoruz.
-              Doğal güzelliklerin ortasında, konforlu odalarımız ve lezzetli yemeklerimizle sizleri bekliyoruz.
+            Edirne’nin kalbinde sıcak ve samimi bir konaklama deneyimi sunan pansiyonumuzda. Misafirlerimize rahatlık ve huzuru bir arada sunarken, şehrin tarihî dokusunu keşfetmeniz için ideal bir ortam sağlıyoruz.
             </p>
             <Badge variant="secondary" className="bg-sage-100 text-sage-800 px-4 py-2 text-base">
               25+ Yıllık Deneyim

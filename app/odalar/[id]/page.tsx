@@ -9,7 +9,7 @@ import { RoomImageSlider } from "@/components/room-image-slider";
 // Room data (in a real application, this would come from a database)
 const rooms = [
   {
-    id: 1,
+    id: 201,
     name: "Tek Kişilik Pansiyon",
     price: "₺900",
     capacity: 1,
@@ -33,7 +33,7 @@ const rooms = [
     amenities: ["Ücretsiz Wi-Fi", "LCD TV", "Klima", "Minibar", "Saç Kurutma Makinesi", "Kasa", "Balkon", "Jakuzi", "Deniz Manzarası", "Uydu Yayını", "Çay/Kahve Makinesi"]
   },
   {
-    id: 2,
+    id: 202,
     name: "Çift Kişilik Pansiyon",
     price: "₺1800",
     capacity: 2,
@@ -57,7 +57,7 @@ const rooms = [
     amenities: ["Ücretsiz Wi-Fi", "LCD TV", "Klima", "Minibar", "Saç Kurutma Makinesi", "Kasa", "Balkon", "Bahçe Manzarası", "Uydu Yayını", "Çay/Kahve Makinesi"]
   },
   {
-    id: 3,
+    id: 203,
     name: "Üç Kişilik Pansiyon",
     price: "2700₺",
     capacity: 3,
@@ -81,7 +81,7 @@ const rooms = [
     amenities: ["Ücretsiz Wi-Fi", "LCD TV", "Klima", "Minibar", "Saç Kurutma Makinesi", "Kasa", "Şehir Manzarası", "Uydu Yayını"]
   },
   {
-    id: 4,
+    id: 204,
     name: "Aile Odası",
     price: "₺3600",
     capacity: 4,
@@ -104,6 +104,200 @@ const rooms = [
     ],
     amenities: ["Ücretsiz Wi-Fi", "LCD TV", "Klima", "Minibar", "Saç Kurutma Makinesi", "Kasa", "Balkon", "Bahçe Manzarası", "Uydu Yayını", "Çay/Kahve Makinesi", "Oturma Alanı", "İki Ayrı Yatak Odası"]
   },
+  {
+    id: 301,
+    name: "6 Yataklı Odamız",
+    price: "₺3600",
+    capacity: 6,
+    bedType: "Tek Kişilik Yatak",
+    view: "Tarihi Manzara",
+    features: ["Klima", "Minibar", "Balkon", "Jakuzi"],
+    description: "Panoramik deniz manzaralı lüks suit odamız. Geniş balkon ve jakuzi ile unutulmaz bir konaklama.",
+    longDescription: "Deniz Manzaralı Suit odamız, konforun ve lüksün bir araya geldiği eşsiz bir konaklama deneyimi sunuyor. Panoramik deniz manzarasına sahip geniş balkonunuzda güne kahve ile başlayabilir, gün batımını izleyebilirsiniz. Özel jakuzili banyosu, minibarı ve klimalı ferah iç mekanıyla her detayı düşünülmüş bu odada kendinizi evinizde hissedeceksiniz.",
+    images: [
+      "/253582329.jpg?height=600&width=800",
+      "/227668163.jpg?height=600&width=800&text=Deniz+Manzarası",
+      "/253587397.jpg?height=600&width=800&text=Jakuzi",
+      "/253588689.jpg?height=600&width=800&text=Balkon",
+      "/253588829.jpg?height=600&width=800&text=Balkon",
+      "/253588949.jpg?height=600&width=800&text=Balkon",
+      "/253587577.jpg?height=600&width=800&text=Balkon",
+      "/255010373.jpg?height=600&width=800&text=Balkon",
+      "/253590109.jpg?height=600&width=800&text=Balkon",
+      "/253590093.jpg?height=600&width=800&text=Balkon"
+    ],
+    amenities: ["Ücretsiz Wi-Fi", "LCD TV", "Klima", "Minibar", "Saç Kurutma Makinesi", "Kasa", "Balkon", "Bahçe Manzarası", "Uydu Yayını", "Çay/Kahve Makinesi", "Oturma Alanı", "İki Ayrı Yatak Odası"]
+  },
+  {
+    id: 302,
+    name: "6 Yataklı Odamız",
+    price: "₺3600",
+    capacity: 6,
+    bedType: "Tek Kişilik Yatak",
+    view: "Tarihi Manzara",
+    features: ["Klima", "Minibar", "Balkon", "Jakuzi"],
+    description: "Panoramik deniz manzaralı lüks suit odamız. Geniş balkon ve jakuzi ile unutulmaz bir konaklama.",
+    longDescription: "Deniz Manzaralı Suit odamız, konforun ve lüksün bir araya geldiği eşsiz bir konaklama deneyimi sunuyor. Panoramik deniz manzarasına sahip geniş balkonunuzda güne kahve ile başlayabilir, gün batımını izleyebilirsiniz. Özel jakuzili banyosu, minibarı ve klimalı ferah iç mekanıyla her detayı düşünülmüş bu odada kendinizi evinizde hissedeceksiniz.",
+    images: [
+      "/253582329.jpg?height=600&width=800",
+      "/227668163.jpg?height=600&width=800&text=Deniz+Manzarası",
+      "/253587397.jpg?height=600&width=800&text=Jakuzi",
+      "/253588689.jpg?height=600&width=800&text=Balkon",
+      "/253588829.jpg?height=600&width=800&text=Balkon",
+      "/253588949.jpg?height=600&width=800&text=Balkon",
+      "/253587577.jpg?height=600&width=800&text=Balkon",
+      "/255010373.jpg?height=600&width=800&text=Balkon",
+      "/253590109.jpg?height=600&width=800&text=Balkon",
+      "/253590093.jpg?height=600&width=800&text=Balkon"
+    ],
+    amenities: ["Ücretsiz Wi-Fi", "LCD TV", "Klima", "Minibar", "Saç Kurutma Makinesi", "Kasa", "Balkon", "Bahçe Manzarası", "Uydu Yayını", "Çay/Kahve Makinesi", "Oturma Alanı", "İki Ayrı Yatak Odası"]
+  },
+  {
+    id: 303,
+    name: "6 Yataklı Odamız",
+    price: "₺3600",
+    capacity: 6,
+    bedType: "Tek Kişilik Yatak",
+    view: "Tarihi Manzara",
+    features: ["Klima", "Minibar", "Balkon", "Jakuzi"],
+    description: "Panoramik deniz manzaralı lüks suit odamız. Geniş balkon ve jakuzi ile unutulmaz bir konaklama.",
+    longDescription: "Deniz Manzaralı Suit odamız, konforun ve lüksün bir araya geldiği eşsiz bir konaklama deneyimi sunuyor. Panoramik deniz manzarasına sahip geniş balkonunuzda güne kahve ile başlayabilir, gün batımını izleyebilirsiniz. Özel jakuzili banyosu, minibarı ve klimalı ferah iç mekanıyla her detayı düşünülmüş bu odada kendinizi evinizde hissedeceksiniz.",
+    images: [
+      "/253582329.jpg?height=600&width=800",
+      "/227668163.jpg?height=600&width=800&text=Deniz+Manzarası",
+      "/253587397.jpg?height=600&width=800&text=Jakuzi",
+      "/253588689.jpg?height=600&width=800&text=Balkon",
+      "/253588829.jpg?height=600&width=800&text=Balkon",
+      "/253588949.jpg?height=600&width=800&text=Balkon",
+      "/253587577.jpg?height=600&width=800&text=Balkon",
+      "/255010373.jpg?height=600&width=800&text=Balkon",
+      "/253590109.jpg?height=600&width=800&text=Balkon",
+      "/253590093.jpg?height=600&width=800&text=Balkon"
+    ],
+    amenities: ["Ücretsiz Wi-Fi", "LCD TV", "Klima", "Minibar", "Saç Kurutma Makinesi", "Kasa", "Balkon", "Bahçe Manzarası", "Uydu Yayını", "Çay/Kahve Makinesi", "Oturma Alanı", "İki Ayrı Yatak Odası"]
+  },
+  {
+    id: 304,
+    name: "6 Yataklı Odamız",
+    price: "₺3600",
+    capacity: 6,
+    bedType: "Tek Kişilik Yatak",
+    view: "Tarihi Manzara",
+    features: ["Klima", "Minibar", "Balkon", "Jakuzi"],
+    description: "Panoramik deniz manzaralı lüks suit odamız. Geniş balkon ve jakuzi ile unutulmaz bir konaklama.",
+    longDescription: "Deniz Manzaralı Suit odamız, konforun ve lüksün bir araya geldiği eşsiz bir konaklama deneyimi sunuyor. Panoramik deniz manzarasına sahip geniş balkonunuzda güne kahve ile başlayabilir, gün batımını izleyebilirsiniz. Özel jakuzili banyosu, minibarı ve klimalı ferah iç mekanıyla her detayı düşünülmüş bu odada kendinizi evinizde hissedeceksiniz.",
+    images: [
+      "/253582329.jpg?height=600&width=800",
+      "/227668163.jpg?height=600&width=800&text=Deniz+Manzarası",
+      "/253587397.jpg?height=600&width=800&text=Jakuzi",
+      "/253588689.jpg?height=600&width=800&text=Balkon",
+      "/253588829.jpg?height=600&width=800&text=Balkon",
+      "/253588949.jpg?height=600&width=800&text=Balkon",
+      "/253587577.jpg?height=600&width=800&text=Balkon",
+      "/255010373.jpg?height=600&width=800&text=Balkon",
+      "/253590109.jpg?height=600&width=800&text=Balkon",
+      "/253590093.jpg?height=600&width=800&text=Balkon"
+    ],
+    amenities: ["Ücretsiz Wi-Fi", "LCD TV", "Klima", "Minibar", "Saç Kurutma Makinesi", "Kasa", "Balkon", "Bahçe Manzarası", "Uydu Yayını", "Çay/Kahve Makinesi", "Oturma Alanı", "İki Ayrı Yatak Odası"]
+  },
+  {
+    id: 305,
+    name: "6 Yataklı Odamız",
+    price: "₺3600",
+    capacity: 6,
+    bedType: "Tek Kişilik Yatak",
+    view: "Tarihi Manzara",
+    features: ["Klima", "Minibar", "Balkon", "Jakuzi"],
+    description: "Panoramik deniz manzaralı lüks suit odamız. Geniş balkon ve jakuzi ile unutulmaz bir konaklama.",
+    longDescription: "Deniz Manzaralı Suit odamız, konforun ve lüksün bir araya geldiği eşsiz bir konaklama deneyimi sunuyor. Panoramik deniz manzarasına sahip geniş balkonunuzda güne kahve ile başlayabilir, gün batımını izleyebilirsiniz. Özel jakuzili banyosu, minibarı ve klimalı ferah iç mekanıyla her detayı düşünülmüş bu odada kendinizi evinizde hissedeceksiniz.",
+    images: [
+      "/253582329.jpg?height=600&width=800",
+      "/227668163.jpg?height=600&width=800&text=Deniz+Manzarası",
+      "/253587397.jpg?height=600&width=800&text=Jakuzi",
+      "/253588689.jpg?height=600&width=800&text=Balkon",
+      "/253588829.jpg?height=600&width=800&text=Balkon",
+      "/253588949.jpg?height=600&width=800&text=Balkon",
+      "/253587577.jpg?height=600&width=800&text=Balkon",
+      "/255010373.jpg?height=600&width=800&text=Balkon",
+      "/253590109.jpg?height=600&width=800&text=Balkon",
+      "/253590093.jpg?height=600&width=800&text=Balkon"
+    ],
+    amenities: ["Ücretsiz Wi-Fi", "LCD TV", "Klima", "Minibar", "Saç Kurutma Makinesi", "Kasa", "Balkon", "Bahçe Manzarası", "Uydu Yayını", "Çay/Kahve Makinesi", "Oturma Alanı", "İki Ayrı Yatak Odası"]
+  },
+  {
+    id: 403,
+    name: "6 Yataklı Odamız",
+    price: "₺3600",
+    capacity: 6,
+    bedType: "Tek Kişilik Yatak",
+    view: "Tarihi Manzara",
+    features: ["Klima", "Minibar", "Balkon", "Jakuzi"],
+    description: "Panoramik deniz manzaralı lüks suit odamız. Geniş balkon ve jakuzi ile unutulmaz bir konaklama.",
+    longDescription: "Deniz Manzaralı Suit odamız, konforun ve lüksün bir araya geldiği eşsiz bir konaklama deneyimi sunuyor. Panoramik deniz manzarasına sahip geniş balkonunuzda güne kahve ile başlayabilir, gün batımını izleyebilirsiniz. Özel jakuzili banyosu, minibarı ve klimalı ferah iç mekanıyla her detayı düşünülmüş bu odada kendinizi evinizde hissedeceksiniz.",
+    images: [
+      "/253582329.jpg?height=600&width=800",
+      "/227668163.jpg?height=600&width=800&text=Deniz+Manzarası",
+      "/253587397.jpg?height=600&width=800&text=Jakuzi",
+      "/253588689.jpg?height=600&width=800&text=Balkon",
+      "/253588829.jpg?height=600&width=800&text=Balkon",
+      "/253588949.jpg?height=600&width=800&text=Balkon",
+      "/253587577.jpg?height=600&width=800&text=Balkon",
+      "/255010373.jpg?height=600&width=800&text=Balkon",
+      "/253590109.jpg?height=600&width=800&text=Balkon",
+      "/253590093.jpg?height=600&width=800&text=Balkon"
+    ],
+    amenities: ["Ücretsiz Wi-Fi", "LCD TV", "Klima", "Minibar", "Saç Kurutma Makinesi", "Kasa", "Balkon", "Bahçe Manzarası", "Uydu Yayını", "Çay/Kahve Makinesi", "Oturma Alanı", "İki Ayrı Yatak Odası"]
+  },
+  {
+    id: 404,
+    name: "6 Yataklı Odamız",
+    price: "₺3600",
+    capacity: 6,
+    bedType: "Tek Kişilik Yatak",
+    view: "Tarihi Manzara",
+    features: ["Klima", "Minibar", "Balkon", "Jakuzi"],
+    description: "Panoramik deniz manzaralı lüks suit odamız. Geniş balkon ve jakuzi ile unutulmaz bir konaklama.",
+    longDescription: "Deniz Manzaralı Suit odamız, konforun ve lüksün bir araya geldiği eşsiz bir konaklama deneyimi sunuyor. Panoramik deniz manzarasına sahip geniş balkonunuzda güne kahve ile başlayabilir, gün batımını izleyebilirsiniz. Özel jakuzili banyosu, minibarı ve klimalı ferah iç mekanıyla her detayı düşünülmüş bu odada kendinizi evinizde hissedeceksiniz.",
+    images: [
+      "/253582329.jpg?height=600&width=800",
+      "/227668163.jpg?height=600&width=800&text=Deniz+Manzarası",
+      "/253587397.jpg?height=600&width=800&text=Jakuzi",
+      "/253588689.jpg?height=600&width=800&text=Balkon",
+      "/253588829.jpg?height=600&width=800&text=Balkon",
+      "/253588949.jpg?height=600&width=800&text=Balkon",
+      "/253587577.jpg?height=600&width=800&text=Balkon",
+      "/255010373.jpg?height=600&width=800&text=Balkon",
+      "/253590109.jpg?height=600&width=800&text=Balkon",
+      "/253590093.jpg?height=600&width=800&text=Balkon"
+    ],
+    amenities: ["Ücretsiz Wi-Fi", "LCD TV", "Klima", "Minibar", "Saç Kurutma Makinesi", "Kasa", "Balkon", "Bahçe Manzarası", "Uydu Yayını", "Çay/Kahve Makinesi", "Oturma Alanı", "İki Ayrı Yatak Odası"]
+  },
+  {
+    id: 405,
+    name: "6 Yataklı Odamız",
+    price: "₺3600",
+    capacity: 6,
+    bedType: "Tek Kişilik Yatak",
+    view: "Tarihi Manzara",
+    features: ["Klima", "Minibar", "Balkon", "Jakuzi"],
+    description: "Panoramik deniz manzaralı lüks suit odamız. Geniş balkon ve jakuzi ile unutulmaz bir konaklama.",
+    longDescription: "Deniz Manzaralı Suit odamız, konforun ve lüksün bir araya geldiği eşsiz bir konaklama deneyimi sunuyor. Panoramik deniz manzarasına sahip geniş balkonunuzda güne kahve ile başlayabilir, gün batımını izleyebilirsiniz. Özel jakuzili banyosu, minibarı ve klimalı ferah iç mekanıyla her detayı düşünülmüş bu odada kendinizi evinizde hissedeceksiniz.",
+    images: [
+      "/253582329.jpg?height=600&width=800",
+      "/227668163.jpg?height=600&width=800&text=Deniz+Manzarası",
+      "/253587397.jpg?height=600&width=800&text=Jakuzi",
+      "/253588689.jpg?height=600&width=800&text=Balkon",
+      "/253588829.jpg?height=600&width=800&text=Balkon",
+      "/253588949.jpg?height=600&width=800&text=Balkon",
+      "/253587577.jpg?height=600&width=800&text=Balkon",
+      "/255010373.jpg?height=600&width=800&text=Balkon",
+      "/253590109.jpg?height=600&width=800&text=Balkon",
+      "/253590093.jpg?height=600&width=800&text=Balkon"
+    ],
+    amenities: ["Ücretsiz Wi-Fi", "LCD TV", "Klima", "Minibar", "Saç Kurutma Makinesi", "Kasa", "Balkon", "Bahçe Manzarası", "Uydu Yayını", "Çay/Kahve Makinesi", "Oturma Alanı", "İki Ayrı Yatak Odası"]
+  },
+
+  
 ];
 
 

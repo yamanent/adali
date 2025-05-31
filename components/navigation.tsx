@@ -11,6 +11,7 @@ export default function Navigation() {
   const navItems = [
     { href: "/", label: "Anasayfa" },
     { href: "/odalar", label: "Odalar" },
+    { href: "/organizasyon", label: "Organizasyon" },
     { href: "/galeri", label: "Galeri" },
     { href: "/iletisim", label: "İletişim" },
   ]
