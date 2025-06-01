@@ -9,11 +9,8 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  i18n: {
-    defaultLocale: 'tr',
-    locales: ['tr', 'en'],
-    localeDetection: false,
-  },
+  // The i18n configuration is removed as it's not compatible with app directory
+  // Internationalization is now handled through the app directory structure
 }
 
 export default nextConfig

@@ -5,6 +5,7 @@ import "./globals.css"
 import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
 import MobileQuickAccess from "@/components/mobile-quick-access"
+import LanguageProvider from "@/components/language-provider"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -31,6 +32,7 @@ export default function RootLayout({
   return (
     <html lang="tr">
       <body className={inter.className}>
+        <LanguageProvider />
         <Navigation />
         <main>{children}</main>
         <Footer />

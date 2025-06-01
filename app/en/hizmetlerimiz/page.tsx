@@ -143,22 +143,28 @@ export default function ServicesPage() {
       </div>
 
       {/* CTA Section */}
-      <div className="bg-sage-100 py-16">
+      <section className="py-20 bg-sage-800 text-white">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold mb-6 text-sage-800">Ready to Plan Your Stay?</h2>
-          <p className="text-lg mb-8 max-w-2xl mx-auto text-sage-700">
-            Reserve your place at Adalı Guesthouse, offering historical atmosphere and modern comfort in the heart of Edirne.
+          <h2 className="text-4xl md:text-5xl font-bold mb-6">Rezervasyonunuzu Yapın</h2>
+          <p className="text-xl mb-8 text-sage-200 max-w-2xl mx-auto">
+            Tarih içinde unutulmaz bir konaklama için bugün rezervasyon yapın. Erken rezervasyon indirimleri için bizi
+            arayın.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-sage-600 hover:bg-sage-700 text-white">
-              <a href="https://wa.me/2842135527">Reservation via WhatsApp</a>
+            <Button size="lg" className="bg-cream-600 hover:bg-cream-700 text-sage-800 px-8 py-3 text-lg" asChild>
+              <a href="/iletisim">Rezervasyon</a>
             </Button>
-            <Button size="lg" variant="outline" className="border-sage-600 text-sage-700 hover:bg-sage-50">
-              <Link href="/en/odalar">Explore Our Rooms</Link>
+            <Button
+              size="lg"
+              variant="outline"
+              className="border-white text-white bg-white/20 hover:bg-white hover:text-sage-800 px-8 py-3 text-lg"
+              asChild
+            >
+              <a href="tel:02842135527">Bizi Arayın: 0 (284) 213 5527</a>
             </Button>
           </div>
         </div>
-      </div>
+      </section>  
     </div>
   );
 }
