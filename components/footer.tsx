@@ -12,7 +12,7 @@ export default function Footer() {
           <div>
             <div className="mb-4">
               <Image 
-                src="/Adali.svg" 
+                src="/Adalibeyaz.svg" 
                 alt="Adalı Pansiyon Logo" 
                 width={310}
                 height={100}
