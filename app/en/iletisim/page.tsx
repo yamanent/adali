@@ -91,7 +91,7 @@ export default function ContactPage() {
                       <div>
                         <h3 className="font-semibold text-sage-800 mb-2">Address</h3>
                         <p className="text-sage-600">
-                          Yancıkçı Şahin, Şeyh Davut Sk. No:5
+                          Sarıcapaşa Mah.Şeyh Davut Sk. No:5
                           <br />
                           22100 Edirne Merkez/Edirne
                         </p>

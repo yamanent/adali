@@ -88,7 +88,7 @@ export default function TermsOfUsePage() {
               </p>
               <p className="mb-2">E-posta: bilgi@adalipansiyonedirne.com</p>
               <p className="mb-2">Telefon: 0(284) 213 5527</p>
-              <p>Adres: Yancıkçı Şahin, Şeyh Davut Sk. No:5, 22100 Edirne Merkez/Edirne</p>
+              <p>Adres: Sarıcapaşa Mah.Şeyh Davut Sk. No:5, 22100 Edirne Merkez/Edirne</p>
             </div>
 
             <div className="mt-10 pt-6 border-t border-sage-200 flex flex-wrap gap-4">

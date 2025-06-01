@@ -21,7 +21,7 @@ export default function RoomsPage() {
     {
       id: 201,
       name: "Room 201",
-      price: "₺3000",
+
       capacity: 6,
       bedType: "Bunk Beds",
       view: "City View",
@@ -32,7 +32,7 @@ export default function RoomsPage() {
     {
       id: 202,
       name: "Room 202",
-      price: "₺3000",
+
       capacity: 6,
       bedType: "Bunk Beds",
       view: "Garden View",
@@ -43,7 +43,7 @@ export default function RoomsPage() {
     {
       id: 203,
       name: "Room 203",
-      price: "₺1500",
+
       capacity: 3,
       bedType: "Single Beds",
       view: "City View",
@@ -54,7 +54,7 @@ export default function RoomsPage() {
     {
       id: 204,
       name: "Room 204",
-      price: "₺1000",
+
       capacity: 2,
       bedType: "Double Bed",
       view: "Garden View",
@@ -65,7 +65,7 @@ export default function RoomsPage() {
     {
       id: 205,
       name: "Room 205",
-      price: "₺1200",
+
       capacity: 2,
       bedType: "Double Bed",
       view: "City View",
@@ -76,7 +76,7 @@ export default function RoomsPage() {
     {
       id: 301,
       name: "Room 301",
-      price: "₺2000",
+
       capacity: 4,
       bedType: "Single Beds",
       view: "City View",
@@ -87,7 +87,7 @@ export default function RoomsPage() {
     {
       id: 302,
       name: "Room 302",
-      price: "₺1800",
+
       capacity: 3,
       bedType: "Single Beds",
       view: "Garden View",
@@ -98,7 +98,7 @@ export default function RoomsPage() {
     {
       id: 303,
       name: "Room 303",
-      price: "₺1500",
+
       capacity: 3,
       bedType: "Single Beds",
       view: "City View",
@@ -109,7 +109,7 @@ export default function RoomsPage() {
     {
       id: 304,
       name: "Room 304",
-      price: "₺1000",
+
       capacity: 2,
       bedType: "Double Bed",
       view: "Garden View",
@@ -120,7 +120,7 @@ export default function RoomsPage() {
     {
       id: 305,
       name: "Room 305",
-      price: "₺1200",
+
       capacity: 2,
       bedType: "Double Bed",
       view: "City View",
@@ -131,7 +131,7 @@ export default function RoomsPage() {
     {
       id: 403,
       name: "Room 403",
-      price: "₺1500",
+
       capacity: 3,
       bedType: "Single Beds",
       view: "City View",
@@ -142,7 +142,7 @@ export default function RoomsPage() {
     {
       id: 404,
       name: "Room 404",
-      price: "₺1000",
+
       capacity: 2,
       bedType: "Double Bed",
       view: "Garden View",
@@ -153,7 +153,7 @@ export default function RoomsPage() {
     {
       id: 405,
       name: "Room 405",
-      price: "₺1200",
+
       capacity: 2,
       bedType: "Double Bed",
       view: "City View",
@@ -224,9 +224,7 @@ export default function RoomsPage() {
                     className="object-cover transition-transform duration-500 group-hover:scale-105 cursor-pointer" 
                     onClick={() => openLightbox(room.images[0] || "/placeholder.svg")}
                   />
-                  <div className="absolute top-4 right-4">
-                    <Badge className="bg-sage-700/90 text-white font-medium px-3 py-1 text-sm shadow-md">{room.price}/night</Badge>
-                  </div>
+
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 </div>
                 <CardHeader className="pb-2">
@@ -263,10 +261,7 @@ export default function RoomsPage() {
 
                   <div className="mt-6 pt-5 border-t border-sage-200/70">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                      <div className="bg-sage-50/70 px-4 py-2 rounded-md mb-3 sm:mb-0 inline-flex">
-                        <span className="text-2xl font-bold text-sage-800">{room.price}</span>
-                        <span className="text-sage-600 self-end ml-1 mb-0.5">/night</span>
-                      </div>
+
                       <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-3">
                         <Link href={`/en/odalar/${room.id}`} className="w-full sm:w-auto">
                           <Button variant="outline" className="w-full sm:w-auto border-sage-600 text-sage-600 hover:bg-sage-50 hover:border-sage-700 font-medium px-5 rounded-md">

@@ -223,24 +223,27 @@ export default function HomePage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-sage-700 text-white">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-4xl font-bold mb-6">Ready to Book Your Stay?</h2>
-            <p className="text-xl mb-8 text-sage-100">
-              Contact us now for the best rates and availability for your travel dates
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="bg-white text-sage-700 hover:bg-sage-100" asChild>
-                <a href="/en/iletisim">Contact Us</a>
-              </Button>
-              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10" asChild>
-                <a href="/en/odalar">View Rooms</a>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
+     <section className="py-20 bg-sage-800 text-white">
+             <div className="container mx-auto px-4 text-center">
+               <h2 className="text-4xl md:text-5xl font-bold mb-6">Make Your Reservation</h2>
+               <p className="text-xl mb-8 text-sage-200 max-w-2xl mx-auto">
+                 Book today for an unforgettable stay in history. Call us for early booking discounts.
+               </p>
+               <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                 <Button size="lg" className="bg-cream-600 hover:bg-cream-700 text-sage-800 px-8 py-3 text-lg" asChild>
+                   <a href="/en/iletisim">Reservation</a>
+                 </Button>
+                 <Button
+                   size="lg"
+                   variant="outline"
+                   className="border-white text-white bg-white/20 hover:bg-white hover:text-sage-800 px-8 py-3 text-lg"
+                   asChild
+                 >
+                   <a href="tel:02842135527">Call Us: 0 (284) 213 5527</a>
+                 </Button>
+               </div>
+             </div>
+           </section>
     </div>
   )
 }

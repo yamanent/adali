@@ -21,7 +21,7 @@ export default function RoomsPage() {
     {
       id: 201,
       name: "201 Numaralı Oda",
-      price: "₺3000",
+
       capacity: 6,
       bedType: "Ranza Sistemi",
       view: "Şehir Manzarası",
@@ -32,7 +32,7 @@ export default function RoomsPage() {
     {
       id: 202,
       name: "202 Numaralı Oda",
-      price: "₺3000",
+
       capacity: 6,
       bedType: "Ranza Sistemi",
       view: "Bahçe Manzarası",
@@ -43,7 +43,7 @@ export default function RoomsPage() {
     {
       id: 203,
       name: "203 Numaralı Oda",
-      price: "₺1500",
+
       capacity: 3,
       bedType: "Tek Kişilik Yataklar",
       view: "Şehir Manzarası",
@@ -54,7 +54,7 @@ export default function RoomsPage() {
     {
       id: 204,
       name: "204 Numaralı Oda",
-      price: "₺1000",
+
       capacity: 2,
       bedType: "Çift Kişilik Yatak",
       view: "Bahçe Manzarası",
@@ -65,7 +65,7 @@ export default function RoomsPage() {
     {
       id: 205,
       name: "205 Numaralı Oda",
-      price: "₺1200",
+
       capacity: 2,
       bedType: "Çift Kişilik Yatak",
       view: "Şehir Manzarası",
@@ -76,7 +76,7 @@ export default function RoomsPage() {
     {
       id: 301,
       name: "301 Numaralı Oda",
-      price: "₺2000",
+
       capacity: 4,
       bedType: "Tek Kişilik Yataklar",
       view: "Şehir Manzarası",
@@ -87,7 +87,7 @@ export default function RoomsPage() {
     {
       id: 302,
       name: "302 Numaralı Oda",
-      price: "₺1800",
+
       capacity: 3,
       bedType: "Tek Kişilik Yataklar",
       view: "Bahçe Manzarası",
@@ -98,7 +98,7 @@ export default function RoomsPage() {
     {
       id: 303,
       name: "303 Numaralı Oda",
-      price: "₺1500",
+
       capacity: 3,
       bedType: "Tek Kişilik Yataklar",
       view: "Şehir Manzarası",
@@ -109,7 +109,7 @@ export default function RoomsPage() {
     {
       id: 304,
       name: "304 Numaralı Oda",
-      price: "₺1000",
+
       capacity: 2,
       bedType: "Çift Kişilik Yatak",
       view: "Bahçe Manzarası",
@@ -120,7 +120,7 @@ export default function RoomsPage() {
     {
       id: 305,
       name: "305 Numaralı Oda",
-      price: "₺1200",
+
       capacity: 2,
       bedType: "Çift Kişilik Yatak",
       view: "Şehir Manzarası",
@@ -131,7 +131,7 @@ export default function RoomsPage() {
     {
       id: 403,
       name: "403 Numaralı Oda",
-      price: "₺1500",
+
       capacity: 3,
       bedType: "Tek Kişilik Yataklar",
       view: "Şehir Manzarası",
@@ -142,7 +142,7 @@ export default function RoomsPage() {
     {
       id: 404,
       name: "404 Numaralı Oda",
-      price: "₺1000",
+
       capacity: 2,
       bedType: "Çift Kişilik Yatak",
       view: "Bahçe Manzarası",
@@ -153,7 +153,7 @@ export default function RoomsPage() {
     {
       id: 405,
       name: "405 Numaralı Oda",
-      price: "₺1200",
+
       capacity: 2,
       bedType: "Çift Kişilik Yatak",
       view: "Şehir Manzarası",
@@ -224,9 +224,7 @@ export default function RoomsPage() {
                     className="object-cover transition-transform duration-500 group-hover:scale-105 cursor-pointer" 
                     onClick={() => openLightbox(room.images[0] || "/placeholder.svg")}
                   />
-                  <div className="absolute top-4 right-4">
-                    <Badge className="bg-sage-700/90 text-white font-medium px-3 py-1 text-sm shadow-md">{room.price}/gece</Badge>
-                  </div>
+
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 </div>
                 <CardHeader className="pb-2">
@@ -263,10 +261,7 @@ export default function RoomsPage() {
 
                   <div className="mt-6 pt-5 border-t border-sage-200/70">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                      <div className="bg-sage-50/70 px-4 py-2 rounded-md mb-3 sm:mb-0 inline-flex">
-                        <span className="text-2xl font-bold text-sage-800">{room.price}</span>
-                        <span className="text-sage-600 self-end ml-1 mb-0.5">/gece</span>
-                      </div>
+
                       <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-3">
                         <Link href={`/odalar/${room.id}`} className="w-full sm:w-auto">
                           <Button variant="outline" className="w-full sm:w-auto border-sage-600 text-sage-600 hover:bg-sage-50 hover:border-sage-700 font-medium px-5 rounded-md">

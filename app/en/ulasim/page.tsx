@@ -140,7 +140,7 @@ export default function TransportationPage() {
             </p>
             <div className="flex items-center justify-center gap-2 text-sage-700">
               <MapPin className="h-5 w-5" />
-              <p className="font-medium">Yancıkçı Şahin, Şeyh Davut Sk. No:5, 22100 Edirne Merkez/Edirne</p>
+              <p className="font-medium">Sarıcapaşa Mah.Şeyh Davut Sk. No:5, 22100 Edirne Merkez/Edirne</p>
             </div>
           </div>
         </div>

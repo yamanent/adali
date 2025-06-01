@@ -12,7 +12,7 @@ export default function Footer() {
           <div>
             <div className="mb-4">
               <Image 
-                src="/Adalibeyaz.svg" 
+                src="/Adali.svg" 
                 alt="Adalı Pansiyon Logo" 
                 width={310}
                 height={100}
@@ -91,7 +91,7 @@ export default function Footer() {
               <div className="flex items-start gap-3">
                 <MapPin className="w-5 h-5 text-sage-400 mt-0.5" />
                 <div className="text-sage-300">
-                  <p>Yancıkçı Şahin</p>
+                  <p>Sarıcapaşa Mah.</p>
                   <p>Şeyh Davut Sk. No:5</p>
                   <p>22100 Edirne Merkez/Edirne</p>
                 </div>

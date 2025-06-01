@@ -126,7 +126,7 @@ export default function OrganizasyonPage() {
                         <span className="text-sage-800">{event.price}</span>
                       </div>
                       <Button className="w-full sm:w-auto bg-sage-600 hover:bg-sage-700 text-white font-medium px-5 rounded-md shadow-sm">
-                        Teklif Alın
+                        <a href="/iletisim">Teklif Alın</a>
                       </Button>
                     </div>
                   </div>

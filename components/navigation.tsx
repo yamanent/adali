@@ -59,7 +59,7 @@ export default function Navigation() {
           {/* Logo */}
           <Link href="/" className="flex items-center py-2">
             <Image 
-              src="/adali.svg" 
+              src="/Adali.svg" 
               alt="Adalı Pansiyon Logo" 
               width={310}
               height={100}
