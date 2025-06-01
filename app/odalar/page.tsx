@@ -1,11 +1,22 @@
-import Image from "next/image"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Users, Bed, Eye, Snowflake, Wifi, Coffee, Tv, Wind, Scissors, Droplet, ShowerHead, KeyRound, Refrigerator } from "lucide-react"
+"use client";
+
+import Image from "next/image";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardHeader, CardContent, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Users, Bed, Eye, Snowflake, Wifi, Coffee, Tv, Wind, Scissors, Droplet, ShowerHead, KeyRound, Refrigerator } from "lucide-react";
+import { useState } from "react";
+import { ImageLightbox } from "@/components/image-lightbox";
 
 export default function RoomsPage() {
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxImage, setLightboxImage] = useState("");
+
+  const openLightbox = (imageUrl: string) => {
+    setLightboxImage(imageUrl);
+    setLightboxOpen(true);
+  };
   const rooms = [
     {
       id: 201,
@@ -210,7 +221,8 @@ export default function RoomsPage() {
                     src={room.images[0] || "/placeholder.svg"} 
                     alt={room.name} 
                     fill 
-                    className="object-cover transition-transform duration-500 group-hover:scale-105" 
+                    className="object-cover transition-transform duration-500 group-hover:scale-105 cursor-pointer" 
+                    onClick={() => openLightbox(room.images[0] || "/placeholder.svg")}
                   />
                   <div className="absolute top-4 right-4">
                     <Badge className="bg-sage-700/90 text-white font-medium px-3 py-1 text-sm shadow-md">{room.price}/gece</Badge>
@@ -262,7 +274,7 @@ export default function RoomsPage() {
                           </Button>
                         </Link>
                         <Button className="w-full sm:w-auto bg-sage-600 hover:bg-sage-700 text-white font-medium px-5 rounded-md shadow-sm">
-                          Hemen Rezervasyon Yap
+                          <a href="/iletisim">Hemen Rezervasyon Yap</a>
                         </Button>
                       </div>
                     </div>
@@ -275,23 +287,34 @@ export default function RoomsPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 md:py-24 bg-sage-800 text-white relative overflow-hidden">
-        <div className="absolute inset-0 bg-[url('/texture-bg.png')] opacity-10"></div>
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cream-400 to-transparent opacity-50"></div>
-        <div className="container mx-auto px-4 text-center relative z-10">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight">Rezervasyon Yapmak İster misiniz?</h2>
-          <div className="h-1 w-16 bg-cream-400 mx-auto mb-6 opacity-70"></div>
-          <p className="text-sage-200 mb-8 max-w-2xl mx-auto">Müsaitlik durumu için bizi arayın veya online rezervasyon yapın</p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto">
-            <Button size="lg" className="bg-cream-600 hover:bg-cream-700 text-sage-800 font-medium rounded-md shadow-md w-full sm:w-auto">
-              Online Rezervasyon
+      <section className="py-20 bg-sage-800 text-white">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-4xl md:text-5xl font-bold mb-6">Rezervasyonunuzu Yapın</h2>
+          <p className="text-xl mb-8 text-sage-200 max-w-2xl mx-auto">
+            Tarih içinde unutulmaz bir konaklama için bugün rezervasyon yapın. Erken rezervasyon indirimleri için bizi
+            arayın.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button size="lg" className="bg-cream-600 hover:bg-cream-700 text-sage-800 px-8 py-3 text-lg" asChild>
+              <a href="/iletisim">Rezervasyon</a>
             </Button>
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-sage-800 font-medium rounded-md w-full sm:w-auto">
-              0(284) 213 5527
+            <Button
+              size="lg"
+              variant="outline"
+              className="border-white text-white bg-white/20 hover:bg-white hover:text-sage-800 px-8 py-3 text-lg"
+              asChild
+            >
+              <a href="tel:02842135527">Bizi Arayın: 0 (284) 213 5527</a>
             </Button>
           </div>
         </div>
       </section>
+      {/* Lightbox */}
+      <ImageLightbox 
+        isOpen={lightboxOpen} 
+        imageUrl={lightboxImage} 
+        onClose={() => setLightboxOpen(false)} 
+      />
     </div>
   )
 }

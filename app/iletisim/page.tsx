@@ -2,13 +2,14 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import { MapPin, Phone, Mail, Clock, Facebook, Instagram, Twitter } from "lucide-react"
+import { MapPin, Phone, Mail, Clock, Facebook, Instagram, Twitter, CheckCircle, AlertCircle } from "lucide-react"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -18,11 +19,36 @@ export default function ContactPage() {
     subject: "",
     message: "",
   })
+  
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle')
+  const formRef = useRef<HTMLFormElement>(null)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    // Form submission logic here
-    console.log("Form submitted:", formData)
+    setIsSubmitting(true)
+    setSubmitStatus('idle')
+    
+    // Form gönderimi simülasyonu
+    // Gerçek bir email gönderimi yerine sadece başarılı olduğunu gösteriyoruz
+    setTimeout(() => {
+      console.log('Form gönderildi:', formData)
+      setSubmitStatus('success')
+      // Formu sıfırla
+      setFormData({
+        name: "",
+        email: "",
+        phone: "",
+        subject: "",
+        message: "",
+      })
+      setIsSubmitting(false)
+      
+      // 5 saniye sonra bildirim mesajını kaldır
+      setTimeout(() => {
+        setSubmitStatus('idle')
+      }, 5000)
+    }, 1500) // 1.5 saniye gecikme ile başarılı gösterimi
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -146,7 +172,27 @@ export default function ContactPage() {
                 <CardTitle className="text-2xl text-sage-800">Bize Mesaj Gönderin</CardTitle>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-6">
+                {submitStatus === 'success' && (
+                  <Alert className="mb-6 bg-green-50 border-green-500 text-green-800">
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                    <AlertTitle>Başarılı!</AlertTitle>
+                    <AlertDescription>
+                      Mesajınız başarıyla gönderildi. En kısa sürede size dönüş yapacağız.
+                    </AlertDescription>
+                  </Alert>
+                )}
+                
+                {submitStatus === 'error' && (
+                  <Alert className="mb-6 bg-red-50 border-red-500 text-red-800">
+                    <AlertCircle className="h-5 w-5 text-red-600" />
+                    <AlertTitle>Hata!</AlertTitle>
+                    <AlertDescription>
+                      Mesajınız gönderilirken bir hata oluştu. Lütfen daha sonra tekrar deneyin veya doğrudan telefon ile bize ulaşın.
+                    </AlertDescription>
+                  </Alert>
+                )}
+                
+                <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="name" className="text-sage-700">
@@ -218,8 +264,12 @@ export default function ContactPage() {
                     />
                   </div>
 
-                  <Button type="submit" className="w-full bg-sage-600 hover:bg-sage-700 text-white">
-                    Mesajı Gönder
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-sage-600 hover:bg-sage-700 text-white"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? 'Gönderiliyor...' : 'Mesajı Gönder'}
                   </Button>
                 </form>
               </CardContent>
@@ -244,16 +294,24 @@ export default function ContactPage() {
       </section>
 
       {/* Quick Contact */}
-      <section className="py-16 bg-sage-800 text-white">
+      <section className="py-20 bg-sage-800 text-white">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold mb-4">Hızlı İletişim</h2>
-          <p className="text-sage-200 mb-6">Acil durumlar ve rezervasyon için direkt bizi arayabilirsiniz</p>
+          <h2 className="text-4xl md:text-5xl font-bold mb-6">Rezervasyonunuzu Yapın</h2>
+          <p className="text-xl mb-8 text-sage-200 max-w-2xl mx-auto">
+            Tarih içinde unutulmaz bir konaklama için bugün rezervasyon yapın. Erken rezervasyon indirimleri için bizi
+            arayın.
+          </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-cream-600 hover:bg-cream-700 text-sage-800">
-              Hemen Ara: 0(284) 213 5527
+            <Button size="lg" className="bg-cream-600 hover:bg-cream-700 text-sage-800 px-8 py-3 text-lg" asChild>
+              <a href="/iletisim">Rezervasyon</a>
             </Button>
-            <Button size="lg" variant="outline" className="border-white text-white bg-white/20 hover:bg-white hover:text-sage-800">
-              Adalı Pansiyon WhatsApp: (0532) 123 45 67
+            <Button
+              size="lg"
+              variant="outline"
+              className="border-white text-white bg-white/20 hover:bg-white hover:text-sage-800 px-8 py-3 text-lg"
+              asChild
+            >
+              <a href="tel:02842135527">Bizi Arayın: 0 (284) 213 5527</a>
             </Button>
           </div>
         </div>

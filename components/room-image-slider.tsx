@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState, useCallback, useEffect } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ImageLightbox } from "./image-lightbox";
 
 interface RoomImageSliderProps {
   images: string[];
@@ -14,6 +15,13 @@ export const RoomImageSlider = ({ images, roomName }: RoomImageSliderProps) => {
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [slidesInView, setSlidesInView] = useState<number[]>([]);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxImage, setLightboxImage] = useState("");
+  
+  const openLightbox = (imageUrl: string) => {
+    setLightboxImage(imageUrl);
+    setLightboxOpen(true);
+  };
   
   const scrollPrev = useCallback(() => {
     if (emblaApi) emblaApi.scrollPrev();
@@ -63,8 +71,9 @@ export const RoomImageSlider = ({ images, roomName }: RoomImageSliderProps) => {
                 src={image} 
                 alt={`${roomName} - Görsel ${index + 1}`} 
                 fill 
-                className="object-cover" 
+                className="object-cover cursor-pointer" 
                 priority={index === 0}
+                onClick={() => openLightbox(image)}
               />
             </div>
           ))}
@@ -100,11 +109,19 @@ export const RoomImageSlider = ({ images, roomName }: RoomImageSliderProps) => {
               src={image} 
               alt={`${roomName} - Küçük Görsel ${index + 1}`} 
               fill 
-              className="object-cover" 
+              className="object-cover cursor-pointer"
+              onClick={() => openLightbox(image)}
             />
           </button>
         ))}
       </div>
+      
+      {/* Lightbox */}
+      <ImageLightbox 
+        isOpen={lightboxOpen} 
+        imageUrl={lightboxImage} 
+        onClose={() => setLightboxOpen(false)} 
+      />
     </div>
   );
 };

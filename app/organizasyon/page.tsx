@@ -10,22 +10,22 @@ export default function OrganizasyonPage() {
     {
       id: 1,
       name: "Doğum Günü Kutlaması",
-      price: "₺2500'den başlayan fiyatlarla",
+      price: "Fiyat Teklifi İçin İletişime Geçin",
       capacity: "10-50 kişi",
       icon: Cake,
       features: ["Özel Dekorasyon", "Doğum Günü Pastası", "İkramlar", "Müzik Sistemi", "Fotoğraf Çekimi"],
       description: "Sevdiklerinizle birlikte unutulmaz bir doğum günü kutlaması için özel hazırlanmış paketimiz. Pansiyonumuzun sıcak atmosferinde, şehir manzaralı salonumuzda doğum gününüzü kutlayın.",
-      images: ["/birthday.jpg"],
+      images: ["/2123132.png"],
     },
     {
       id: 2,
       name: "Özel Etkinlikler",
-      price: "₺3500'den başlayan fiyatlarla",
+      price: "Fiyat Teklifi İçin İletişime Geçin",
       capacity: "20-80 kişi",
       icon: PartyPopper,
       features: ["Profesyonel Organizasyon", "İkram Seçenekleri", "Dekorasyon", "Ses ve Işık Sistemi", "Fotoğraf ve Video Çekimi"],
       description: "Nişan, mezuniyet, yıldönümü gibi özel günleriniz için tamamen size özel hazırlanmış organizasyon paketleri. Edirne'nin tarihi dokusunda, unutulmaz anılar biriktirin.",
-      images: ["/special-event.jpg"],
+      images: ["/22222222222222.png"],
     },
   ]
 
@@ -203,19 +203,24 @@ export default function OrganizasyonPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 md:py-24 bg-sage-800 text-white relative overflow-hidden">
-        <div className="absolute inset-0 bg-[url('/texture-bg.png')] opacity-10"></div>
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cream-400 to-transparent opacity-50"></div>
-        <div className="container mx-auto px-4 text-center relative z-10">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight">Organizasyon Teklifi Almak İster misiniz?</h2>
-          <div className="h-1 w-16 bg-cream-400 mx-auto mb-6 opacity-70"></div>
-          <p className="text-sage-200 mb-8 max-w-2xl mx-auto">Özel gününüz için detaylı bilgi ve fiyat teklifi alın</p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto">
-            <Button size="lg" className="bg-cream-600 hover:bg-cream-700 text-sage-800 font-medium rounded-md shadow-md w-full sm:w-auto" asChild>
-              <Link href="/iletisim">Teklif Alın</Link>
+      <section className="py-20 bg-sage-800 text-white">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-4xl md:text-5xl font-bold mb-6">Rezervasyonunuzu Yapın</h2>
+          <p className="text-xl mb-8 text-sage-200 max-w-2xl mx-auto">
+            Tarih içinde unutulmaz bir konaklama için bugün rezervasyon yapın. Erken rezervasyon indirimleri için bizi
+            arayın.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button size="lg" className="bg-cream-600 hover:bg-cream-700 text-sage-800 px-8 py-3 text-lg" asChild>
+              <a href="/iletisim">Rezervasyon</a>
             </Button>
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-sage-800 font-medium rounded-md w-full sm:w-auto" asChild>
-              <Link href="tel:02842135527">0(284) 213 5527</Link>
+            <Button
+              size="lg"
+              variant="outline"
+              className="border-white text-white bg-white/20 hover:bg-white hover:text-sage-800 px-8 py-3 text-lg"
+              asChild
+            >
+              <a href="tel:02842135527">Bizi Arayın: 0 (284) 213 5527</a>
             </Button>
           </div>
         </div>

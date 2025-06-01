@@ -1,8 +1,9 @@
 import Image from "next/image"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Star, Wifi, Coffee, MapPin, Car, Tv, Waves } from "lucide-react"
+import { Star, Wifi, Coffee, MapPin, Car, Tv, Waves, Calendar, User, ArrowRight } from "lucide-react"
 
 export default function HomePage() {
   const services = [
@@ -35,6 +36,36 @@ export default function HomePage() {
     },
   ]
 
+  const blogPosts = [
+    {
+      id: 1,
+      title: "Edirne'nin En İyi 5 Tarihi Mekanı",
+      excerpt: "Edirne'nin zengin tarihini yansıtan en etkileyici 5 tarihi mekanı keşfedin. Selimiye Camii'nden Karaağaç'a kadar...",
+      date: "1 Haziran 2025",
+      author: "Adalı Pansiyon",
+      image: "/selimiye.jpg",
+      slug: "edirnede-gezilecek-yerler"
+    },
+    {
+      id: 2,
+      title: "Edirne Mutfağından Lezzetler",
+      excerpt: "Edirne'nin meşhur ciğerinden tava ciğerine, badem ezmesinden deva-i misk macununa kadar tadılması gereken lezzetler...",
+      date: "25 Mayıs 2025",
+      author: "Adalı Pansiyon",
+      image: "/edirne-mutfagi.jpg",
+      slug: "edirne-mutfagindan-lezzetler"
+    },
+    {
+      id: 3,
+      title: "Kakava Festivali: Edirne'nin Renkli Bahar Şenliği",
+      excerpt: "Her yıl 5-6 Mayıs tarihlerinde düzenlenen, Roman kültürünün en önemli etkinliklerinden Kakava Festivali hakkında bilmeniz gerekenler...",
+      date: "10 Mayıs 2025",
+      author: "Adalı Pansiyon",
+      image: "/kakava.jpg",
+      slug: "kakava-festivali"
+    }
+  ]
+
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -53,7 +84,7 @@ export default function HomePage() {
             <span className="block text-sage-200">Huzurlu Konaklama</span>
           </h1>
           <p className="text-xl md:text-2xl mb-8 text-sage-100 max-w-2xl mx-auto">
-            Doğanın kalbinde, denizin sesiyle uyandığınız unutulmaz bir tatil deneyimi
+            Tarihin içinde, huzurlu bir konaklama deneyimi yaşayın...
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" className="bg-sage-600 hover:bg-sage-700 text-white px-8 py-3 text-lg" asChild>
@@ -137,17 +168,71 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Blog Section */}
+      <section className="py-20 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-sage-800 mb-4">Blog</h2>
+            <p className="text-lg text-sage-600 max-w-2xl mx-auto">
+              Edirne'nin tarihi, kültürü ve lezzetleri hakkında son yazılarımız
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {blogPosts.map((post) => (
+              <Card key={post.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                <div className="relative h-48">
+                  <Image
+                    src={post.image}
+                    alt={post.title}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  />
+                </div>
+                <CardHeader>
+                  <div className="flex items-center gap-2 text-sage-600 text-sm mb-2">
+                    <Calendar className="w-4 h-4" />
+                    <span>{post.date}</span>
+                    <span className="mx-1">•</span>
+                    <User className="w-4 h-4" />
+                    <span>{post.author}</span>
+                  </div>
+                  <CardTitle className="hover:text-sage-600 transition-colors">
+                    <Link href={`/blog/${post.slug}`}>{post.title}</Link>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription className="text-base">{post.excerpt}</CardDescription>
+                </CardContent>
+                <CardFooter>
+                  <Button variant="ghost" className="text-sage-600 hover:text-sage-700 p-0 hover:bg-transparent">
+                    <Link href={`/blog/${post.slug}`} className="flex items-center">
+                      Devamını Oku <ArrowRight className="w-4 h-4 ml-2" />
+                    </Link>
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+          <div className="text-center mt-12">
+            <Button className="bg-sage-600 hover:bg-sage-700 text-white px-8 py-3 text-lg" asChild>
+              <Link href="/blog">Tüm Yazıları Gör</Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-20 bg-sage-800 text-white">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-4xl md:text-5xl font-bold mb-6">Rezervasyonunuzu Yapın</h2>
           <p className="text-xl mb-8 text-sage-200 max-w-2xl mx-auto">
-            Deniz kenarında unutulmaz bir tatil için bugün rezervasyon yapın. Erken rezervasyon indirimleri için bizi
+            Tarih içinde unutulmaz bir konaklama için bugün rezervasyon yapın. Erken rezervasyon indirimleri için bizi
             arayın.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" className="bg-cream-600 hover:bg-cream-700 text-sage-800 px-8 py-3 text-lg" asChild>
-              <a href="/iletisim">Online Rezervasyon</a>
+              <a href="/iletisim">Rezervasyon</a>
             </Button>
             <Button
               size="lg"

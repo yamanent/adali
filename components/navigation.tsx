@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Menu, X, Phone } from "lucide-react"
 
@@ -19,13 +20,17 @@ export default function Navigation() {
   return (
     <nav className="bg-white/95 backdrop-blur-sm border-b border-sage-200 sticky top-0 z-50">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-20">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-sage-600 rounded-full flex items-center justify-center">
-              <span className="text-white font-bold text-sm">AP</span>
-            </div>
-            <span className="text-xl font-bold text-sage-800">Adalı Pansiyon</span>
+          <Link href="/" className="flex items-center py-2">
+            <Image 
+              src="/adali.svg" 
+              alt="Adalı Pansiyon Logo" 
+              width={310}
+              height={100}
+              className="object-contain"
+              priority
+            />
           </Link>
 
           {/* Desktop Navigation */}
@@ -48,7 +53,7 @@ export default function Navigation() {
               0(284) 213 5527
             </Button>
             <Button size="sm" className="bg-sage-600 hover:bg-sage-700 text-white">
-              Rezervasyon
+            <a href="https://wa.me/2842135527">WhatsApp</a>
             </Button>
           </div>
 
@@ -78,7 +83,7 @@ export default function Navigation() {
                   0(284) 213 5527
                 </Button>
                 <Button size="sm" className="bg-sage-600 hover:bg-sage-700 text-white">
-                  Rezervasyon
+                  <a href="https://wa.me/2842135527">WhatsApp ile Rezervasyon</a>
                 </Button>
               </div>
             </div>

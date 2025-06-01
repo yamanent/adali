@@ -1,4 +1,5 @@
 import Link from "next/link"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { MapPin, Phone, Mail, Facebook, Instagram, Twitter } from "lucide-react"
 
@@ -9,14 +10,18 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Company Info */}
           <div>
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="w-8 h-8 bg-cream-600 rounded-full flex items-center justify-center">
-                <span className="text-sage-900 font-bold text-sm">AP</span>
-              </div>
-              <span className="text-xl font-bold">Adalı Pansiyon</span>
+            <div className="mb-4">
+              <Image 
+                src="/Adalibeyaz.svg" 
+                alt="Adalı Pansiyon Logo" 
+                width={310}
+                height={100}
+                className="object-contain"
+                priority
+              />
             </div>
             <p className="text-sage-300 mb-4">
-              1995'ten beri deniz kenarında sıcak ve samimi hizmet anlayışıyla misafirlerimizi ağırlıyoruz.
+            Edirne’nin kalbinde sıcak ve samimi bir konaklama deneyimi sunan pansiyonumuzda. Misafirlerimize rahatlık ve huzuru bir arada sunarken, şehrin tarihî dokusunu keşfetmeniz için ideal bir ortam sağlıyoruz.
             </p>
             <div className="flex space-x-3">
               <Button size="icon" variant="ghost" className="text-sage-300 hover:text-white hover:bg-sage-800">
@@ -46,18 +51,23 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/hizmetlerimiz" className="text-sage-300 hover:text-white transition-colors">
+                  Hizmetlerimiz
+                </Link>
+              </li>
+              <li>
                 <Link href="/galeri" className="text-sage-300 hover:text-white transition-colors">
                   Galeri
                 </Link>
               </li>
               <li>
-                <Link href="/iletisim" className="text-sage-300 hover:text-white transition-colors">
-                  İletişim
+                <Link href="/blog" className="text-sage-300 hover:text-white transition-colors">
+                  Blog
                 </Link>
               </li>
               <li>
-                <Link href="/rezervasyon" className="text-sage-300 hover:text-white transition-colors">
-                  Online Rezervasyon
+                <Link href="/iletisim" className="text-sage-300 hover:text-white transition-colors">
+                  İletişim
                 </Link>
               </li>
             </ul>
@@ -68,11 +78,9 @@ export default function Footer() {
             <h3 className="text-lg font-semibold mb-4">Hizmetlerimiz</h3>
             <ul className="space-y-2 text-sage-300">
               <li>Ücretsiz Wi-Fi</li>
-              <li>Kahvaltı Dahil</li>
+              <li>Kahvaltı </li>
               <li>Ücretsiz Otopark</li>
               <li>24 Saat Resepsiyon</li>
-              <li>Oda Servisi</li>
-              <li>Çamaşırhane</li>
             </ul>
           </div>
 
@@ -103,7 +111,7 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="border-t border-sage-800 mt-8 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
-            <p className="text-sage-400 text-sm">© 2024 Adalı Pansiyon. Tüm hakları saklıdır.</p>
+            <p className="text-sage-400 text-sm">© 2025 Adalı Pansiyon. Tüm hakları saklıdır.</p>
             <div className="flex space-x-6 mt-4 md:mt-0">
               <Link href="/gizlilik-politikasi" className="text-sage-400 hover:text-white text-sm transition-colors">
                 Gizlilik Politikası

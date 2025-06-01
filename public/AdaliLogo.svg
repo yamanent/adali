@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="250" viewBox="0 0 600 250" fill="none">
+  <!-- ADALI text in dark green -->
+  <g transform="translate(100, 30) scale(1.2)">
+    <!-- A with decorative swirl -->
+    <path d="M30,20 L60,180 M45,100 L75,100" stroke="#2D3B2D" stroke-width="12" stroke-linecap="round" />
+    <path d="M30,20 C120,20 120,180 60,180" stroke="#2D3B2D" stroke-width="12" fill="none" stroke-linecap="round" />
+    <path d="M30,100 C10,130 30,160 60,130 C90,100 60,80 30,100" stroke="#2D3B2D" stroke-width="6" fill="none" stroke-linecap="round" />
+    
+    <!-- D -->
+    <path d="M100,20 L100,180 M100,20 C180,20 200,100 180,180 C160,180 100,180 100,180" stroke="#2D3B2D" stroke-width="12" fill="none" stroke-linecap="round" />
+    
+    <!-- A with decorative swirl -->
+    <path d="M230,20 L260,180 M245,100 L275,100" stroke="#2D3B2D" stroke-width="12" stroke-linecap="round" />
+    <path d="M230,20 C320,20 320,180 260,180" stroke="#2D3B2D" stroke-width="12" fill="none" stroke-linecap="round" />
+    <path d="M230,100 C210,130 230,160 260,130 C290,100 260,80 230,100" stroke="#2D3B2D" stroke-width="6" fill="none" stroke-linecap="round" />
+    
+    <!-- L -->
+    <path d="M340,20 L340,180 M340,180 L400,180" stroke="#2D3B2D" stroke-width="12" stroke-linecap="round" />
+    
+    <!-- I -->
+    <path d="M430,20 L430,180" stroke="#2D3B2D" stroke-width="12" stroke-linecap="round" />
+  </g>
+  
+  <!-- PANSIYON text in gold -->
+  <g transform="translate(100, 200) scale(1)">
+    <!-- P -->
+    <path d="M30,20 L30,120 M30,20 C80,20 80,60 30,60" stroke="#D4AF37" stroke-width="8" fill="none" stroke-linecap="round" />
+    
+    <!-- A with decorative swirl -->
+    <path d="M100,20 L120,120 M110,70 L130,70" stroke="#D4AF37" stroke-width="8" stroke-linecap="round" />
+    <path d="M100,20 C150,20 150,120 120,120" stroke="#D4AF37" stroke-width="8" fill="none" stroke-linecap="round" />
+    <path d="M110,70 C100,85 110,100 120,85 C130,70 120,60 110,70" stroke="#D4AF37" stroke-width="4" fill="none" stroke-linecap="round" />
+    
+    <!-- N -->
+    <path d="M160,20 L160,120 M160,20 C210,80 210,120 210,120" stroke="#D4AF37" stroke-width="8" fill="none" stroke-linecap="round" />
+    
+    <!-- S -->
+    <path d="M240,20 C270,20 270,60 240,70 C210,80 210,120 240,120 C270,120 270,120 270,120" stroke="#D4AF37" stroke-width="8" fill="none" stroke-linecap="round" />
+    
+    <!-- I -->
+    <path d="M300,20 L300,120" stroke="#D4AF37" stroke-width="8" stroke-linecap="round" />
+    
+    <!-- Y -->
+    <path d="M330,20 L350,70 M370,20 L350,70 L350,120" stroke="#D4AF37" stroke-width="8" stroke-linecap="round" />
+    
+    <!-- O -->
+    <path d="M400,20 C440,20 440,120 400,120 C360,120 360,20 400,20" stroke="#D4AF37" stroke-width="8" fill="none" stroke-linecap="round" />
+    
+    <!-- N -->
+    <path d="M460,20 L460,120 M460,20 C510,80 510,120 510,120" stroke="#D4AF37" stroke-width="8" fill="none" stroke-linecap="round" />
+  </g>
+</svg>
