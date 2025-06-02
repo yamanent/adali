@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Wifi, Coffee, Car, Clock, Utensils, Snowflake, MapPin, Bed, Users, ShowerHead, Tv, Check } from "lucide-react";
+import { Wifi, Coffee, Car, Clock, Utensils, MapPin, Bed, Users, ShowerHead, Tv, Check } from "lucide-react";
 
 export default function ServicesPage() {
   const services = [
@@ -16,9 +16,9 @@ export default function ServicesPage() {
     },
     {
       id: 2,
-      title: "Air Conditioning",
-      description: "Heating and cooling in all our rooms according to the season",
-      icon: <Snowflake className="w-5 h-5 text-sage-600" />,
+      title: "Central Heating",
+      description: "Central heating system for comfortable accommodation during winter months",
+      icon: <Coffee className="w-5 h-5 text-sage-600" />,
       category: "Accommodation"
     },
     {
