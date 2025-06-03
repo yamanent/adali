@@ -101,6 +101,10 @@ export default function Footer() {
                 <span className="text-sage-300">0(284) 213 5527</span>
               </div>
               <div className="flex items-center gap-3">
+                <Phone className="w-5 h-5 text-sage-400" />
+                <span className="text-sage-300">0(531) 360 64 22 <span className="text-sage-400 text-xs ml-2">(WhatsApp)</span></span>
+              </div>
+              <div className="flex items-center gap-3">
                 <Mail className="w-5 h-5 text-sage-400" />
                 <span className="text-sage-300">bilgi@adalipansiyonedirne.com</span>
               </div>

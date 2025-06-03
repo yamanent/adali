@@ -109,7 +109,7 @@ export default function ContactPage() {
                         <p className="text-sage-600">
                           0(284) 213 5527
                           <br />
-                          0(284) 213 5527 (WhatsApp)
+                          0(531) 360 64 22 (WhatsApp)
                         </p>
                       </div>
                     </div>
@@ -311,7 +311,7 @@ export default function ContactPage() {
               className="border-white text-white bg-white/20 hover:bg-white hover:text-sage-800 px-8 py-3 text-lg"
               asChild
             >
-              <a href="tel:02842135527">Bizi Arayın: 0 (284) 213 5527</a>
+              <a href="tel:05313606422">Bizi Arayın: 0(531) 360 64 22</a>
             </Button>
           </div>
         </div>

@@ -20,7 +20,7 @@ export default function GalleryPage() {
     {
       id: 1,
       src: "/227666993.jpg?height=400&width=600",
-      alt: "Deniz Manzaralı Suit",
+      alt: "Tarihi Merkeze Yakın Suit",
       category: "rooms",
       title: "",
     },
@@ -41,7 +41,7 @@ export default function GalleryPage() {
     {
       id: 4,
       src: "/227666999.jpg?height=400&width=600",
-      alt: "Deniz Kenarı",
+      alt: "Tarihi Merkez Manzarası",
       category: "garden",
       title: "",
     },
@@ -69,7 +69,7 @@ export default function GalleryPage() {
     {
       id: 8,
       src: "/253421065.jpg?height=400&width=600",
-      alt: "Sahil Yürüyüşü",
+      alt: "Tarihi Sokak Yürüyüşü",
       category: "rooms",
       title: "",
     },

@@ -10,14 +10,14 @@ import LanguageProvider from "@/components/language-provider"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Adalı Pansiyon - Deniz Kenarında Huzurlu Konaklama",
+  title: "Adalı Pansiyon - Tarihi Merkeze Yakın Huzurlu Konaklama",
   description:
-    "Edirne'de deniz kenarında yer alan pansiyonumuzda sıcak atmosfer ve konforlu odalarla unutulmaz bir tatil deneyimi yaşayın. Ücretsiz Wi-Fi, kahvaltı dahil, deniz manzarası.",
-  keywords: "pansiyon, Edirne, deniz kenarı, tatil, konaklama, otel, pension, sea view",
+    "Edirne'nin tarihi merkezinde yer alan pansiyonumuzda sıcak atmosfer ve konforlu odalarla unutulmaz bir tatil deneyimi yaşayın. Ücretsiz Wi-Fi, kahvaltı dahil, tarihi yerlere yakın konum.",
+  keywords: "pansiyon, Edirne, tarihi merkez, tatil, konaklama, otel, pension, historical center",
   openGraph: {
-    title: "Adalı Pansiyon - Deniz Kenarında Huzurlu Konaklama",
+    title: "Adalı Pansiyon - Tarihi Merkeze Yakın Huzurlu Konaklama",
     description:
-      "Edirne'de deniz kenarında yer alan pansiyonumuzda sıcak atmosfer ve konforlu odalarla unutulmaz bir tatil deneyimi yaşayın.",
+      "Edirne'nin tarihi merkezinde yer alan pansiyonumuzda sıcak atmosfer ve konforlu odalarla unutulmaz bir tatil deneyimi yaşayın.",
     type: "website",
     locale: "tr_TR",
   },

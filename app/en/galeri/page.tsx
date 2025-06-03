@@ -20,7 +20,7 @@ export default function GalleryPage() {
     {
       id: 1,
       src: "/227666993.jpg?height=400&width=600",
-      alt: "Sea View Suite",
+      alt: "Suite Near Historical Center",
       category: "rooms",
       title: "",
     },
@@ -41,7 +41,7 @@ export default function GalleryPage() {
     {
       id: 4,
       src: "/227666999.jpg?height=400&width=600",
-      alt: "Seaside",
+      alt: "Historical Center View",
       category: "garden",
       title: "",
     },

@@ -2,14 +2,14 @@ import type React from "react"
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "Adalı Guesthouse - Peaceful Accommodation by the Sea",
+  title: "Adalı Guesthouse - Peaceful Accommodation Near Historical Center",
   description:
-    "Experience an unforgettable holiday with a warm atmosphere and comfortable rooms at our guesthouse located by the sea in Edirne. Free Wi-Fi, breakfast included, sea view.",
-  keywords: "guesthouse, Edirne, seaside, holiday, accommodation, hotel, pension, sea view",
+    "Experience an unforgettable holiday with a warm atmosphere and comfortable rooms at our guesthouse located in the historical center of Edirne. Free Wi-Fi, breakfast included, close to historical sites.",
+  keywords: "guesthouse, Edirne, historical center, holiday, accommodation, hotel, pension, historical sites",
   openGraph: {
-    title: "Adalı Guesthouse - Peaceful Accommodation by the Sea",
+    title: "Adalı Guesthouse - Peaceful Accommodation Near Historical Center",
     description:
-      "Experience an unforgettable holiday with a warm atmosphere and comfortable rooms at our guesthouse located by the sea in Edirne.",
+      "Experience an unforgettable holiday with a warm atmosphere and comfortable rooms at our guesthouse located in the historical center of Edirne.",
     type: "website",
     locale: "en_US",
   },
