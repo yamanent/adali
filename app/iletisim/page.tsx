@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { MapPin, Phone, Mail, Clock, Facebook, Instagram, Twitter, CheckCircle, AlertCircle } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { sendContactMessage } from "@/lib/telegram"
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -24,31 +25,44 @@ export default function ContactPage() {
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle')
   const formRef = useRef<HTMLFormElement>(null)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
     setSubmitStatus('idle')
     
-    // Form gönderimi simülasyonu
-    // Gerçek bir email gönderimi yerine sadece başarılı olduğunu gösteriyoruz
-    setTimeout(() => {
-      console.log('Form gönderildi:', formData)
-      setSubmitStatus('success')
-      // Formu sıfırla
-      setFormData({
-        name: "",
-        email: "",
-        phone: "",
-        subject: "",
-        message: "",
-      })
+    try {
+      // Telegram'a mesaj gönder
+      const result = await sendContactMessage(
+        formData,
+        "web-form" // IP yerine form kaynağını gönderiyoruz
+      )
+      
+      if (result) {
+        console.log('Form gönderildi:', formData)
+        setSubmitStatus('success')
+        // Formu sıfırla
+        setFormData({
+          name: "",
+          email: "",
+          phone: "",
+          subject: "",
+          message: "",
+        })
+      } else {
+        setSubmitStatus('error')
+        console.error('Mesaj gönderilemedi')
+      }
+    } catch (error) {
+      console.error('Mesaj gönderme hatası:', error)
+      setSubmitStatus('error')
+    } finally {
       setIsSubmitting(false)
       
       // 5 saniye sonra bildirim mesajını kaldır
       setTimeout(() => {
         setSubmitStatus('idle')
       }, 5000)
-    }, 1500) // 1.5 saniye gecikme ile başarılı gösterimi
+    }
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
