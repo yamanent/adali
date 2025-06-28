@@ -2,9 +2,11 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
+import { Toaster } from "sonner"
 import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
 import MobileQuickAccess from "@/components/mobile-quick-access"
+import { AuthProvider } from "@/context/auth-context"
 import LanguageProvider from "@/components/language-provider"
 
 const inter = Inter({ subsets: ["latin"] })
@@ -32,11 +34,14 @@ export default function RootLayout({
   return (
     <html lang="tr">
       <body className={inter.className}>
-        <LanguageProvider />
-        <Navigation />
-        <main>{children}</main>
-        <Footer />
-        <MobileQuickAccess />
+        <AuthProvider>
+          <LanguageProvider />
+          <Toaster position="top-center" richColors />
+          <Navigation />
+          <main>{children}</main>
+          <Footer />
+          <MobileQuickAccess />
+        </AuthProvider>
       </body>
     </html>
   )

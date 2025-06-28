@@ -13,6 +13,11 @@ export default function Navigation() {
   const pathname = usePathname()
   const router = useRouter()
   
+  // Admin sayfalarında navigation gösterme
+  if (pathname.startsWith('/admin')) {
+    return null
+  }
+  
   // Determine current locale
   const currentLocale = pathname.startsWith('/en') ? 'en' : 'tr'
   const alternateLocale = getAlternateLocale(currentLocale)

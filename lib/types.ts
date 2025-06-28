@@ -20,22 +20,30 @@ export enum ReservationStatus {
   PENDING = "PENDING",
   CHECKED_IN = "CHECKED_IN",
   CHECKED_OUT = "CHECKED_OUT",
-  CANCELLED = "CANCELLED"
+  CANCELLED = "CANCELLED",
+  CANCELED = "CANCELED", // Eski kod ile uyumluluk için
+  NO_SHOW = "NO_SHOW"
 }
 
 export enum PaymentStatus {
   PAID = "PAID",
   PARTIAL = "PARTIAL",
-  UNPAID = "UNPAID"
+  PARTIALLY_PAID = "PARTIALLY_PAID", // Eski kod ile uyumluluk için
+  UNPAID = "UNPAID",
+  NOT_PAID = "NOT_PAID", // Alternatif kullanım
+  REFUNDED = "REFUNDED"
 }
 
 export enum BookingSource {
   DIRECT = "DIRECT",
   BOOKING = "BOOKING.COM",
+  BOOKING_COM = "BOOKING", // Eski kod ile uyumluluk için
   AIRBNB = "AIRBNB",
   PHONE = "PHONE",
   EMAIL = "EMAIL",
-  WALK_IN = "WALK_IN"
+  WALK_IN = "WALK_IN",
+  EXPEDIA = "EXPEDIA", // Eski kod ile uyumluluk için
+  OTHER = "OTHER" // Eski kod ile uyumluluk için
 }
 
 // Oda tipi tanımlaması
