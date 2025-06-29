@@ -44,6 +44,25 @@ const app = {
   options: { ...firebaseConfig }
 };
 
+// Mock Timestamp sınıfı
+export const Timestamp = {
+  now: () => ({
+    toDate: () => new Date(),
+    seconds: Math.floor(Date.now() / 1000),
+    nanoseconds: (Date.now() % 1000) * 1000000
+  }),
+  fromDate: (date: Date) => ({
+    toDate: () => date,
+    seconds: Math.floor(date.getTime() / 1000),
+    nanoseconds: (date.getTime() % 1000) * 1000000
+  }),
+  fromMillis: (millis: number) => ({
+    toDate: () => new Date(millis),
+    seconds: Math.floor(millis / 1000),
+    nanoseconds: (millis % 1000) * 1000000
+  })
+};
+
 // Sorgu fonksiyonları
 export const where = (field: string, operator: string, value: any) => {
   return { field, operator, value, type: 'where' };

@@ -178,16 +178,30 @@ const processDataForFirestore = (data: any, isNew: boolean = false): any => {
  */
 const processDataFromFirestore = <T>(data: any): T => {
   if (!data) return data;
-  const processedData = { ...data } as any;
-
+  
+  // Tarih alanlarını dönüştür
+  const processedData = { ...data };
+  
+  // Tüm alanları kontrol et
   for (const key in processedData) {
-    if (processedData.hasOwnProperty(key)) {
-      // Timestamp tipinde olup olmadığını kontrol et
-      if (processedData[key] && typeof processedData[key] === 'object' && processedData[key].toDate && typeof processedData[key].toDate === 'function') {
-        processedData[key] = processedData[key].toDate().toISOString();
-      }
+    const value = processedData[key];
+    
+    // Timestamp nesnesi mi kontrolü
+    if (value && typeof value === 'object' && value.toDate && typeof value.toDate === 'function') {
+      processedData[key] = value.toDate().toISOString();
+    } 
+    // localStorage'dan yüklenen tarih nesneleri için özel işlem
+    else if (value && typeof value === 'object' && value.seconds !== undefined && value.nanoseconds !== undefined) {
+      // Bu bir timestamp nesnesi ama toDate() fonksiyonu yok (localStorage'dan gelmiş)
+      const milliseconds = value.seconds * 1000 + value.nanoseconds / 1000000;
+      processedData[key] = new Date(milliseconds).toISOString();
+    }
+    else if (value && typeof value === 'object' && !Array.isArray(value)) {
+      // İç içe nesneleri işle
+      processedData[key] = processDataFromFirestore(value);
     }
   }
+  
   return processedData as T;
 };
 
