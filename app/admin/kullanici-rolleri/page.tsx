@@ -10,152 +10,88 @@ import { toast } from "sonner";
 import { useAuth } from "@/context/auth-context";
 import { UserRole } from "@/types/auth";
 import Unauthorized from "@/components/auth/unauthorized";
+import { FirestoreUser } from "@/lib/firebase-models"; // FirestoreUser modelini kullan
+import * as userService from "@/lib/services/userService"; // userService'i import et
 
-// Kullanıcı tipi tanımı
-type User = {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-  permissions: string[];
-};
-
-// İzin tipi tanımı
-type Permission = {
-  id: string;
-  name: string;
-  description: string;
-};
-
-// Örnek izinler listesi
-const availablePermissions: Permission[] = [
-  { id: "view:dashboard", name: "Dashboard Görüntüleme", description: "Dashboard sayfasını görüntüleme izni" },
-  { id: "view:statistics", name: "İstatistik Görüntüleme", description: "İstatistik sayfasını görüntüleme izni" },
-  { id: "view:reservations", name: "Rezervasyon Görüntüleme", description: "Rezervasyonları görüntüleme izni" },
-  { id: "create:reservation", name: "Rezervasyon Oluşturma", description: "Yeni rezervasyon oluşturma izni" },
-  { id: "edit:reservation", name: "Rezervasyon Düzenleme", description: "Mevcut rezervasyonları düzenleme izni" },
-  { id: "delete:reservation", name: "Rezervasyon Silme", description: "Rezervasyonları silme izni" },
-  { id: "view:expenses", name: "Gider Görüntüleme", description: "Giderleri görüntüleme izni" },
-  { id: "create:expense", name: "Gider Oluşturma", description: "Yeni gider oluşturma izni" },
-  { id: "edit:expense", name: "Gider Düzenleme", description: "Mevcut giderleri düzenleme izni" },
-  { id: "delete:expense", name: "Gider Silme", description: "Giderleri silme izni" },
-  { id: "view:rooms", name: "Oda Görüntüleme", description: "Odaları görüntüleme izni" },
-  { id: "edit:rooms", name: "Oda Düzenleme", description: "Odaları düzenleme izni" },
-  { id: "view:customers", name: "Müşteri Görüntüleme", description: "Müşterileri görüntüleme izni" },
-  { id: "edit:customers", name: "Müşteri Düzenleme", description: "Müşterileri düzenleme izni" },
-];
-
-// Örnek kullanıcılar (gerçek uygulamada API'den gelecek)
-const mockUsers: User[] = [
-  {
-    id: "1",
-    name: "Admin Kullanıcı",
-    email: "admin@example.com",
-    role: UserRole.ADMIN,
-    permissions: ["view:dashboard", "view:statistics", "view:reservations"]
-  },
-  {
-    id: "2",
-    name: "Yönetici Kullanıcı",
-    email: "manager@example.com",
-    role: UserRole.MANAGER,
-    permissions: ["view:dashboard", "view:reservations", "create:reservation", "edit:reservation"]
-  },
-  {
-    id: "3",
-    name: "Personel Kullanıcı",
-    email: "staff@example.com",
-    role: UserRole.STAFF,
-    permissions: ["view:dashboard", "view:reservations"]
-  }
-];
+// İzin yönetimi şimdilik kaldırıldı
+// type Permission = {
+//   id: string;
+//   name: string;
+//   description: string;
+// };
+// const availablePermissions: Permission[] = [ /* ... */ ];
 
 export default function UserRolesPage() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [users, setUsers] = useState<FirestoreUser[]>([]);
+  const [selectedUser, setSelectedUser] = useState<FirestoreUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
-  const [newUserName, setNewUserName] = useState("");
-  const [newUserEmail, setNewUserEmail] = useState("");
-  const [newUserRole, setNewUserRole] = useState<UserRole>(UserRole.STAFF);
-  const [newUserPermissions, setNewUserPermissions] = useState<string[]>([]);
+  // newUserName ve newUserEmail state'leri FirestoreUser'dan gelecek, düzenleme için ayrı state tutmaya gerek yok.
+  const [editingUserRole, setEditingUserRole] = useState<UserRole>(UserRole.STAFF);
   
   const router = useRouter();
-  const { user } = useAuth();
+  const { user: loggedInUser, loading: authLoading } = useAuth(); // Mevcut giriş yapmış kullanıcı
 
   useEffect(() => {
-    // Gerçek uygulamada API'den kullanıcıları çekecek
-    setUsers(mockUsers);
-    setIsLoading(false);
-  }, []);
+    // if (authLoading) return; // Auth yüklenene kadar bekle
+    // if (!loggedInUser || loggedInUser.role !== UserRole.ADMIN) {
+    //   // Yetkisiz erişim, ana sayfaya veya login'e yönlendirilebilir.
+    //   // Bu kontrol zaten sayfanın sonunda yapılıyor.
+    //   return;
+    // }
+
+    setIsLoading(true);
+    const unsubscribe = userService.listenToUsers((fetchedUsers) => {
+      setUsers(fetchedUsers);
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [loggedInUser, authLoading]);
 
   // Kullanıcı seçme fonksiyonu
-  const handleSelectUser = (user: User) => {
-    setSelectedUser(user);
-    setNewUserName(user.name);
-    setNewUserEmail(user.email);
-    setNewUserRole(user.role);
-    setNewUserPermissions(user.permissions);
+  const handleSelectUser = (userToEdit: FirestoreUser) => {
+    setSelectedUser(userToEdit);
+    setEditingUserRole(userToEdit.role); // Seçilen kullanıcının mevcut rolünü al
     setIsEditing(true);
   };
 
-  // Yeni kullanıcı oluşturma modunu açma
+  // Yeni kullanıcı oluşturma şimdilik devre dışı
   const handleNewUser = () => {
-    setSelectedUser(null);
-    setNewUserName("");
-    setNewUserEmail("");
-    setNewUserRole(UserRole.STAFF);
-    setNewUserPermissions([]);
-    setIsEditing(true);
+    toast.info("Yeni kullanıcı oluşturma özelliği şu anda aktif değil.");
+    // setSelectedUser(null);
+    // setEditingUserRole(UserRole.STAFF);
+    // setIsEditing(true);
   };
 
-  // İzin değiştirme işlemi
-  const handlePermissionChange = (permissionId: string, isChecked: boolean) => {
-    if (isChecked) {
-      setNewUserPermissions([...newUserPermissions, permissionId]);
-    } else {
-      setNewUserPermissions(newUserPermissions.filter(id => id !== permissionId));
-    }
-  };
+  // İzin yönetimi kaldırıldı
+  // const handlePermissionChange = (permissionId: string, isChecked: boolean) => { /* ... */ };
 
-  // Kullanıcı kaydetme işlemi
-  const handleSaveUser = () => {
-    if (!newUserName || !newUserEmail) {
-      toast.error("Lütfen tüm alanları doldurun.");
+  // Kullanıcı rolünü kaydetme işlemi
+  const handleSaveUserRole = async () => {
+    if (!selectedUser) {
+      toast.error("Güncellenecek kullanıcı seçili değil.");
       return;
     }
 
-    const updatedUser: User = {
-      id: selectedUser?.id || `new-${Date.now()}`,
-      name: newUserName,
-      email: newUserEmail,
-      role: newUserRole,
-      permissions: newUserPermissions
-    };
-
-    if (selectedUser) {
-      // Mevcut kullanıcıyı güncelle
-      setUsers(users.map(u => u.id === selectedUser.id ? updatedUser : u));
-      toast.success("Kullanıcı başarıyla güncellendi.");
-    } else {
-      // Yeni kullanıcı ekle
-      setUsers([...users, updatedUser]);
-      toast.success("Yeni kullanıcı başarıyla oluşturuldu.");
+    // Sadece rol güncellenecek
+    try {
+      await userService.updateUserRole(selectedUser.id, editingUserRole);
+      toast.success(`${selectedUser.displayName || selectedUser.email}' adlı kullanıcının rolü başarıyla güncellendi.`);
+      setIsEditing(false);
+      setSelectedUser(null); // Seçimi temizle
+    } catch (error) {
+      toast.error("Kullanıcı rolü güncellenirken bir hata oluştu.");
+      console.error("Error updating user role:", error);
     }
-
-    setIsEditing(false);
   };
 
-  // Kullanıcı silme işlemi
+  // Kullanıcı silme şimdilik devre dışı
   const handleDeleteUser = (userId: string) => {
-    if (confirm("Bu kullanıcıyı silmek istediğinize emin misiniz?")) {
-      setUsers(users.filter(u => u.id !== userId));
-      toast.success("Kullanıcı başarıyla silindi.");
-      if (selectedUser?.id === userId) {
-        setSelectedUser(null);
-        setIsEditing(false);
-      }
-    }
+    toast.info("Kullanıcı silme özelliği şu anda aktif değil.");
+    // if (confirm("Bu kullanıcıyı silmek istediğinize emin misiniz?")) {
+    //   // userService.deleteUser(userId) çağrılacak
+    // }
   };
 
   // İptal işlemi
@@ -251,34 +187,18 @@ export default function UserRolesPage() {
         <Card className="md:col-span-2">
           <CardHeader>
             <CardTitle>
-              {isEditing ? (selectedUser ? "Kullanıcı Düzenle" : "Yeni Kullanıcı") : "Kullanıcı Detayları"}
+              {isEditing && selectedUser ? `Rol Düzenle: ${selectedUser.displayName || selectedUser.email}` : "Kullanıcı Detayları"}
             </CardTitle>
             <CardDescription>
-              {isEditing ? "Kullanıcı bilgilerini ve izinlerini düzenleyin" : "Düzenlemek için bir kullanıcı seçin"}
+              {isEditing && selectedUser ? "Kullanıcının rolünü değiştirin." : "Rolünü düzenlemek için bir kullanıcı seçin."}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {isEditing ? (
+            {isEditing && selectedUser ? (
               <div className="space-y-4">
                 <div>
-                  <label htmlFor="name" className="block text-sm font-medium mb-1">Ad Soyad</label>
-                  <Input 
-                    id="name" 
-                    value={newUserName} 
-                    onChange={(e) => setNewUserName(e.target.value)} 
-                    placeholder="Kullanıcı adı soyadı"
-                  />
-                </div>
-                
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium mb-1">E-posta</label>
-                  <Input 
-                    id="email" 
-                    type="email" 
-                    value={newUserEmail} 
-                    onChange={(e) => setNewUserEmail(e.target.value)} 
-                    placeholder="kullanici@example.com"
-                  />
+                  <p className="text-sm font-medium">Kullanıcı: {selectedUser.displayName || selectedUser.email}</p>
+                  <p className="text-xs text-gray-500">ID: {selectedUser.id}</p>
                 </div>
                 
                 <div>
@@ -286,81 +206,37 @@ export default function UserRolesPage() {
                   <select
                     id="role"
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    value={newUserRole}
-                    onChange={(e) => setNewUserRole(e.target.value as UserRole)}
+                    value={editingUserRole} // editingUserRole state'ini kullan
+                    onChange={(e) => setEditingUserRole(e.target.value as UserRole)}
                   >
-                    <option value={UserRole.ADMIN}>Admin</option>
-                    <option value={UserRole.MANAGER}>Yönetici</option>
-                    <option value={UserRole.STAFF}>Personel</option>
-                    <option value={UserRole.USER}>Kullanıcı</option>
+                    {Object.values(UserRole).map(roleValue => (
+                      <option key={roleValue} value={roleValue}>{getRoleName(roleValue)}</option>
+                    ))}
                   </select>
                 </div>
-                
-                <div>
-                  <label className="block text-sm font-medium mb-2">İzinler</label>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 border rounded-md p-3 max-h-[300px] overflow-y-auto">
-                    {availablePermissions.map(permission => (
-                      <div key={permission.id} className="flex items-start space-x-2">
-                        <Checkbox 
-                          id={`permission-${permission.id}`} 
-                          checked={newUserPermissions.includes(permission.id)}
-                          onCheckedChange={(checked) => handlePermissionChange(permission.id, checked === true)}
-                        />
-                        <div className="grid gap-1.5">
-                          <label
-                            htmlFor={`permission-${permission.id}`}
-                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                          >
-                            {permission.name}
-                          </label>
-                          <p className="text-xs text-muted-foreground">
-                            {permission.description}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
+
                 <div className="flex justify-end space-x-2 pt-4">
                   <Button variant="outline" onClick={handleCancel}>
                     İptal
                   </Button>
-                  <Button onClick={handleSaveUser}>
-                    {selectedUser ? "Güncelle" : "Oluştur"}
+                  <Button onClick={handleSaveUserRole}>
+                    Rolü Güncelle
                   </Button>
                 </div>
               </div>
             ) : selectedUser ? (
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-lg font-medium">{selectedUser.name}</h3>
-                  <p className="text-gray-500">{selectedUser.email}</p>
+                  <h3 className="text-lg font-medium">{selectedUser.displayName || selectedUser.email}</h3>
+                  <p className="text-gray-500">E-posta: {selectedUser.email}</p>
                   <p className="text-sm mt-1">Rol: <span className="font-medium">{getRoleName(selectedUser.role)}</span></p>
+                  {selectedUser.username && <p className="text-sm">Kullanıcı Adı: {selectedUser.username}</p>}
+                  {selectedUser.lastLogin && <p className="text-xs text-gray-400 mt-1">Son Giriş: {new Date(selectedUser.lastLogin).toLocaleString()}</p>}
                 </div>
-                
-                <div>
-                  <h4 className="text-md font-medium mb-2">İzinler</h4>
-                  {selectedUser.permissions.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                      {selectedUser.permissions.map(permId => {
-                        const permission = availablePermissions.find(p => p.id === permId);
-                        return (
-                          <div key={permId} className="text-sm p-2 bg-gray-50 rounded-md">
-                            <p className="font-medium">{permission?.name || permId}</p>
-                            {permission && <p className="text-xs text-gray-500">{permission.description}</p>}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <p className="text-gray-500 text-sm">Bu kullanıcıya atanmış izin bulunmamaktadır.</p>
-                  )}
-                </div>
-                
+
                 <div className="flex justify-end pt-4">
                   <Button onClick={() => handleSelectUser(selectedUser)}>
-                    Düzenle
+                    Rolü Düzenle
                   </Button>
                 </div>
               </div>

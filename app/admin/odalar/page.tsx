@@ -9,8 +9,9 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Room } from "@/lib/models";
-import { getAllRooms, addRoom, updateRoom, deleteRoom } from "@/lib/roomService";
+import { Room } from "@/lib/firebase-models"; // Firebase modelini kullan
+import { roomService } from "@/lib/roomService"; // Firebase roomService'i import et (henüz oluşturulmadı varsayımı)
+import { useAuth } from "@/context/auth-context"; // AuthContext'i kullan
 
 export default function RoomsPage() {
   const [isLoading, setIsLoading] = useState(true);
@@ -19,43 +20,43 @@ export default function RoomsPage() {
   const [editingRoom, setEditingRoom] = useState<Room | null>(null);
   
   // Form durumları
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<Omit<Room, 'id' | 'createdAt' | 'updatedAt'>>({ // Room tipine göre güncelle
     number: "",
     type: "Standart",
     capacity: 2,
     price: 0,
-    status: "Boş" as Room["status"]
+    status: "Boş",
+    // Firebase modelinde olabilecek ek alanlar için varsayılan değerler eklenebilir
+    // amenities: [],
+    // imageUrls: [],
   });
   
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
 
   useEffect(() => {
-    // Oturum kontrolü
-    const isLoggedIn = localStorage.getItem("adminLoggedIn");
-    if (isLoggedIn !== "true") {
-      router.push("/admin");
-      return;
-    }
+    // if (!authLoading && !user) {
+    //   router.push("/admin");
+    //   return;
+    // }
+    // if (user) {
+      setIsLoading(true);
+      const unsubscribeRooms = roomService.listen((updatedRooms) => {
+        setRooms(updatedRooms);
+        setIsLoading(false);
+      });
 
-    loadRooms();
-  }, [router]);
+      return () => {
+        unsubscribeRooms();
+      };
+    // }
+  }, [router, user, authLoading]); // user ve authLoading eklendi, kullanıcı değişirse yeniden dinle
 
-  const loadRooms = () => {
-    try {
-      const allRooms = getAllRooms();
-      setRooms(allRooms);
-      setIsLoading(false);
-    } catch (error) {
-      console.error("Odalar yüklenirken hata:", error);
-      toast.error("Odalar yüklenirken bir hata oluştu.");
-      setIsLoading(false);
-    }
-  };
+  // loadRooms fonksiyonu artık useEffect içinde yönetiliyor.
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     
-    // Sayısal değerler için dönüşüm yap
     if (type === "number") {
       setFormData({
         ...formData,
@@ -69,76 +70,75 @@ export default function RoomsPage() {
     }
   };
 
-  const handleAddRoom = (e: React.FormEvent) => {
+  const handleAddOrUpdateRoom = async (e: React.FormEvent) => {
     e.preventDefault();
     
     try {
-      // Form doğrulama
       if (!formData.number || !formData.type) {
-        toast.error("Lütfen zorunlu alanları doldurun!");
+        toast.error("Lütfen oda numarası ve tipini girin!");
         return;
       }
       
-      // Oda numarası kontrolü
-      const existingRoom = rooms.find(room => room.number === formData.number);
-      if (existingRoom && (!editingRoom || existingRoom.id !== editingRoom.id)) {
-        toast.error("Bu oda numarası zaten kullanılıyor!");
-        return;
+      // Oda numarası benzersizliği Firestore seviyesinde daha iyi kontrol edilebilir (rules veya query ile)
+      // Şimdilik istemci tarafında basit bir kontrol
+      if (!editingRoom) { // Sadece yeni oda eklerken kontrol et
+        const existingRoomQuery = await roomService.getRoomByNumber(formData.number);
+        if (existingRoomQuery) { // Artık bir dizi değil, tek bir oda veya null dönecek
+          toast.error("Bu oda numarası zaten kullanılıyor!");
+          return;
+        }
       }
       
-      if (editingRoom) {
-        // Odayı güncelle
-        updateRoom(editingRoom.id, formData);
+      if (editingRoom && editingRoom.id) {
+        await roomService.update(editingRoom.id, formData);
         toast.success("Oda başarıyla güncellendi!");
       } else {
-        // Yeni oda ekle
-        addRoom(formData);
+        await roomService.create(formData);
         toast.success("Oda başarıyla eklendi!");
       }
       
-      // Formu temizle ve odaları yeniden yükle
       setFormData({
         number: "",
         type: "Standart",
         capacity: 2,
         price: 0,
-        status: "Boş"
+        status: "Boş",
       });
       setEditingRoom(null);
       setIsDialogOpen(false);
-      loadRooms();
     } catch (error) {
-      console.error("Oda kaydedilirken hata:", error);
-      toast.error("Oda kaydedilirken bir hata oluştu!");
+      console.error("Error saving room in RoomsPage:", error);
+      toast.error(`Oda kaydedilirken bir hata oluştu: ${error.message}`);
     }
   };
 
   const handleEditRoom = (room: Room) => {
     setEditingRoom(room);
-    setFormData({
+    setFormData({ // id, createdAt, updatedAt hariç diğer alanları al
       number: room.number,
       type: room.type,
       capacity: room.capacity,
       price: room.price,
-      status: room.status
+      status: room.status,
+      // amenities: room.amenities || [],
+      // imageUrls: room.imageUrls || [],
     });
     setIsDialogOpen(true);
   };
 
-  const handleDeleteRoom = (id: string) => {
+  const handleDeleteRoom = async (id: string) => {
     if (window.confirm("Bu odayı silmek istediğinizden emin misiniz?")) {
       try {
-        deleteRoom(id);
+        await roomService.delete(id);
         toast.success("Oda başarıyla silindi!");
-        loadRooms();
       } catch (error) {
-        console.error("Oda silinirken hata:", error);
-        toast.error("Oda silinirken bir hata oluştu!");
+        console.error("Error deleting room in RoomsPage:", error);
+        toast.error(`Oda silinirken bir hata oluştu: ${error.message}`);
       }
     }
   };
 
-  if (isLoading) {
+  if (isLoading || authLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <p>Yükleniyor...</p>

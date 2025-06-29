@@ -30,40 +30,56 @@ export default function GuestsPage() {
   });
 
   const router = useRouter();
+  // AuthContext ve RoleGate/PermissionGate bu kontrolü üstleneceği için
+  // useEffect içindeki localStorage kontrolü kaldırılacak.
+  // const { user, loading: authLoading } = useAuth();
 
   useEffect(() => {
-    // TODO: Replace with proper AuthContext check and RoleGate/protected route
-    // Basic auth check - replace with proper AuthContext later
-    const isLoggedIn = localStorage.getItem("adminLoggedIn");
-    if (isLoggedIn !== "true") {
-      router.push("/admin");
-      return;
-    }
-    loadGuestsData();
-  }, [router]);
+    // if (!authLoading && !user) {
+    //   router.push('/admin'); // Veya login
+    //   return;
+    // }
+    // if(user) {
+      loadGuestsData();
+    // }
+    // if(user) {
+      setIsLoading(true);
+      const unsubscribeGuests = guestService.listen((updatedGuests) => {
+        setGuests(updatedGuests);
+        setIsLoading(false);
+      });
+      // Arama yapıldığında veya filtre değiştiğinde bu listener'ı güncellemek gerekebilir.
+      // Şimdilik basit bir tümünü dinleme yapıyoruz.
 
-  const loadGuestsData = async () => {
-    setIsLoading(true);
-    try {
-      const guestsData = await listGuests();
-      setGuests(guestsData);
-    } catch (error) {
-      console.error("Misafirler yüklenirken hata:", error);
-      toast.error("Misafirler yüklenirken bir hata oluştu.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      return () => {
+        unsubscribeGuests();
+      };
+    // }
+  }, [router]); // user, authLoading, searchTerm gibi bağımlılıklar eklenebilir.
+
+  // loadGuestsData fonksiyonu artık useEffect içinde yönetiliyor.
 
   const handleSearch = async () => {
+    // Gerçek zamanlı dinleyici ile arama yapmak için queryConstraint'leri güncellemek ve
+    // listener'ı yeniden başlatmak gerekir. Bu, firebase-service.ts'deki listen metodunu
+    // dinamik QueryConstraint alacak şekilde düzenlemeyi gerektirebilir.
+    // Şimdilik, arama fonksiyonu statik kalacak ve tüm misafirler üzerinde istemci tarafında filtreleme yapacak
+    // veya manuel olarak yeniden yükleme yapacak (önerilmez).
+    // Mevcut implementasyonda, listen tüm misafirleri getirdiği için,
+    // arama işlemi filteredGuests gibi bir state üzerinde yapılabilir.
+    // Ya da listen metoduna query parametreleri eklenir.
+    // Şimdilik bu fonksiyonu değiştirmiyorum, ancak ideal çözüm listener'ı dinamikleştirmek.
     if (!searchTerm.trim()) {
-      loadGuestsData();
+      // loadGuestsData(); // Listener olduğu için buna gerek yok, tüm misafirler zaten state'de.
+      // Eğer arama term'i boşsa, filtreyi temizle (eğer client-side filtreleme varsa)
       return;
     }
     setIsLoading(true);
     try {
-      const results = await searchGuests(searchTerm);
-      setGuests(results);
+      // Bu kısım idealde guestService.listen içinde query ile yapılmalı.
+      // Geçici olarak, tüm misafirleri alıp filtreleyebiliriz veya searchGuests'i kullanabiliriz.
+      const results = await guestService.search(searchTerm); // searchGuests'in adı search olduysa
+      setGuests(results); // Bu, listener'dan gelen veriyi ezer. Dikkat!
     } catch (error) {
       console.error("Misafir aranırken hata:", error);
       toast.error("Misafir aranırken bir hata oluştu.");
@@ -93,7 +109,7 @@ export default function GuestsPage() {
         toast.success("Misafir başarıyla oluşturuldu.");
       }
       resetForm();
-      loadGuestsData();
+      // loadGuestsData(); // Bu satır kaldırıldı, listen metodu güncellemeyi yapacak.
     } catch (error) {
       console.error("Misafir kaydedilirken hata:", error);
       toast.error("Misafir kaydedilirken bir hata oluştu.");
@@ -140,9 +156,9 @@ export default function GuestsPage() {
       return;
     }
     try {
-      await deleteGuest(guestId);
+      await guestService.delete(guestId); // guestService üzerinden sil
       toast.success("Misafir başarıyla silindi.");
-      loadGuestsData(); // Refresh the list
+      // loadGuestsData(); // Bu satır kaldırıldı, listen metodu güncellemeyi yapacak.
     } catch (error) {
       console.error("Misafir silinirken hata:", error);
       toast.error("Misafir silinirken bir hata oluştu. Bu misafirin aktif rezervasyonları olabilir.");

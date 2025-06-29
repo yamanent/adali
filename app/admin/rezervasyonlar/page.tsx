@@ -10,95 +10,83 @@ import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 // Reservation ve Guest modellerini firebase-models'dan al
 import { Reservation, Guest } from "@/lib/firebase-models";
-import {
-  getAllReservations,
-  deleteReservation,
-  updateReservationStatus, // Ekledik, gerekebilir
-  // createReservation, updateReservation // Bunlar form içinde yönetiliyor artık
-} from "@/lib/reservation-service"; // reservation-service.ts kullanılıyor
-import { listGuests } from "@/lib/guest-service"; // Misafirleri çekmek için
+// Servisleri firebase-service.ts'den import et
+import { reservationService, guestService } from "@/lib/firebase-service";
 import ReservationForm from "@/components/reservation/ReservationForm";
-import ReservationList, { EnrichedReservation } from "@/components/reservation/ReservationList"; // EnrichedReservation tipini al
+import ReservationList, { EnrichedReservation } from "@/components/reservation/ReservationList";
+// import { useAuth } from "@/context/auth-context"; // Gerekirse aktif et
 
 export default function ReservationsPage() {
   const [isLoading, setIsLoading] = useState(true);
-  const [reservations, setReservations] = useState<Reservation[]>([]); // Ham rezervasyonlar
-  const [allGuestsMap, setAllGuestsMap] = useState<Map<string, Guest>>(new Map()); // Misafirleri map olarak tut
+  const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [allGuestsMap, setAllGuestsMap] = useState<Map<string, Guest>>(new Map());
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  // filterChannel Reservation modelinde yok, eğer kullanılacaksa modele eklenmeli. Şimdilik kaldırıyorum.
-  // const [filterChannel, setFilterChannel] = useState<string | null>(null);
   const [filterPaymentStatus, setFilterPaymentStatus] = useState<string | null>(null);
   const [dateRangeStart, setDateRangeStart] = useState<string>("");
   const [dateRangeEnd, setDateRangeEnd] = useState<string>("");
   
   const router = useRouter();
+  // const { user, loading: authLoading } = useAuth();
 
   useEffect(() => {
-    // TODO: Replace with proper AuthContext check and RoleGate/protected route
-    // Oturum kontrolü (AuthContext ile değiştirilecek)
-    const isLoggedIn = localStorage.getItem("adminLoggedIn");
-    if (isLoggedIn !== "true") {
-      router.push("/admin");
-      return;
-    }
-    loadInitialData();
-  }, [router]);
-
-  const loadInitialData = async () => {
     setIsLoading(true);
-    try {
-      const [reservationsData, guestsData] = await Promise.all([
-        getAllReservations(),
-        listGuests()
-      ]);
 
-      setReservations(reservationsData);
+    const loadGuests = async () => {
+      try {
+        const guestsData = await guestService.getAll();
+        const guestMap = new Map<string, Guest>();
+        guestsData.forEach(guest => guestMap.set(guest.id, guest));
+        setAllGuestsMap(guestMap);
+      } catch (error) {
+        console.error("Error loading guests in ReservationsPage:", error);
+        toast.error(`Misafirler yüklenirken bir hata oluştu: ${error.message}`);
+      }
+    };
+    loadGuests();
 
-      const guestMap = new Map<string, Guest>();
-      guestsData.forEach(guest => guestMap.set(guest.id, guest));
-      setAllGuestsMap(guestMap);
+    const unsubscribeReservations = reservationService.listen(
+      (updatedReservations) => {
+        setReservations(updatedReservations);
+        setIsLoading(false);
+      },
+      // firebase-service.ts içindeki onSnapshot error callback'i zaten konsola logluyor.
+      // Ekstra UI bildirimi istenirse, listen metodunun yapısı değiştirilmeli.
+      // (error) => {
+      //   toast.error(`Rezervasyonları dinlerken bir hata oluştu: ${error.message}`);
+      //   setIsLoading(false);
+      // }
+    );
 
-    } catch (error) {
-      console.error("Veri yüklenirken hata:", error);
-      toast.error("Rezervasyonlar veya misafirler yüklenirken bir hata oluştu.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    return () => {
+      unsubscribeReservations();
+    };
+  }, [router]);
 
   const handleDeleteReservation = async (id: string) => {
     if (window.confirm("Bu rezervasyonu silmek istediğinize emin misiniz?")) {
       try {
-        await deleteReservation(id);
+        await reservationService.delete(id);
         toast.success("Rezervasyon başarıyla silindi.");
-        loadInitialData(); // Veriyi yeniden yükle
       } catch (error) {
-        toast.error("Rezervasyon silinirken bir hata oluştu.");
-        console.error("Error deleting reservation:", error);
+        console.error("Error deleting reservation in ReservationsPage:", error);
+        toast.error(`Rezervasyon silinirken bir hata oluştu: ${error.message}`);
       }
     }
   };
 
-  // handleEditReservation direkt ReservationForm'a selectedReservation'ı set edecek şekilde Tabs içinde ele alınabilir
-  // veya bir Tab state'i ile yönetilebilir. Şimdilik bu fonksiyonu ReservationList prop'u olarak bırakıyorum.
   const handleEditReservation = (reservation: Reservation) => {
     setSelectedReservation(reservation);
-    // Yeni Rezervasyon sekmesine geçiş yapmak için bir yol gerekebilir.
-    // Örneğin: document.querySelector('[data-radix-collection-item][value="new"]')?.click();
-    // Ya da Tabs'ın value'sunu state ile yönetip onu değiştirebiliriz.
-    // Şimdilik, kullanıcı manuel olarak sekmeyi değiştirecek varsayalım.
     const newTabTrigger = document.querySelector('[data-radix-collection-item][value="new"]') as HTMLButtonElement | null;
     if (newTabTrigger) {
-        newTabTrigger.click(); // Programmatically click the "Yeni Rezervasyon" tab
+        newTabTrigger.click();
     }
   };
 
-
   const handleReservationSaved = () => {
     setSelectedReservation(null);
-    loadInitialData(); // Veriyi yeniden yükle
-     const listTabTrigger = document.querySelector('[data-radix-collection-item][value="list"]') as HTMLButtonElement | null;
+    // loadInitialData(); // Bu satır kaldırıldı, listen metodu güncellemeyi yapacak.
+    const listTabTrigger = document.querySelector('[data-radix-collection-item][value="list"]') as HTMLButtonElement | null;
     if (listTabTrigger) {
         listTabTrigger.click();
     }

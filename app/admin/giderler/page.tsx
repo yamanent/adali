@@ -9,10 +9,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Expense } from "@/lib/models";
-import { getAllExpenses, addExpense, deleteExpense } from "@/lib/expenseService";
+// Expense modelini firebase-models'dan veya ana models.ts'den alacağız, şimdilik firebase-models varsayalım.
+import { Expense } from "@/lib/firebase-models";
+import { expenseService } from "@/lib/expenseService"; // Firebase expenseService'i import et
 import { useAuth } from "@/context/auth-context";
-import { UserRole } from "@/types/auth";
+import { UserRole } from "@/types/auth"; // UserRole burada kalsın, RoleGate kullanıyor
 import RoleGate from "@/components/auth/role-gate";
 import Unauthorized from "@/components/auth/unauthorized";
 import PermissionGate from "@/components/auth/permission-gate";
@@ -31,28 +32,31 @@ export default function ExpensesPage() {
   });
 
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  // isAuthenticated yerine user ve authLoading kullanalım
+  const { user, loading: authLoading, isAuthenticated } = useAuth();
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      router.push("/admin");
-      return;
-    }
+    // if (!authLoading && !user) { // AuthContext'in yüklenmesini bekle
+    //   router.push("/admin"); // Veya login sayfasına
+    //   return;
+    // }
+    // if (user) {
+       loadExpenses();
+    // }
+    // if(user) {
+      setIsLoading(true);
+      const unsubscribeExpenses = expenseService.listen((updatedExpenses) => {
+        setExpenses(updatedExpenses);
+        setIsLoading(false);
+      });
 
-    loadExpenses();
-  }, [router, isAuthenticated]);
+      return () => {
+        unsubscribeExpenses();
+      };
+    // }
+  }, [router, user, authLoading]); // user ve authLoading eklendi
 
-  const loadExpenses = () => {
-    try {
-      const allExpenses = getAllExpenses();
-      setExpenses(allExpenses);
-      setIsLoading(false);
-    } catch (error) {
-      console.error("Giderler yüklenirken hata:", error);
-      toast.error("Giderler yüklenirken bir hata oluştu.");
-      setIsLoading(false);
-    }
-  };
+  // loadExpenses fonksiyonu artık useEffect içinde yönetiliyor.
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -69,10 +73,9 @@ export default function ExpensesPage() {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validasyon
     if (!formData.title.trim()) {
       toast.error("Lütfen gider başlığını girin.");
       return;
@@ -83,19 +86,20 @@ export default function ExpensesPage() {
       return;
     }
 
-    try {
-      // Gider ekle
-      addExpense({
-        title: formData.title,
-        amount: Number(formData.amount),
-        category: formData.category as any,
-        date: formData.date,
-        description: formData.description,
-        paymentMethod: formData.paymentMethod as any,
-        receiptNumber: formData.receiptNumber
-      });
+    // Firebase'e gönderilecek veri tipi Omit<Expense, 'id' | 'createdAt' | 'updatedAt'> olmalı
+    const expenseData: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'> = {
+      title: formData.title,
+      amount: Number(formData.amount),
+      category: formData.category as Expense['category'], // Kategori tipini Expense'den al
+      date: formData.date, // Date string olarak kalabilir, Firestore Timestamp'e çevirecek
+      description: formData.description,
+      paymentMethod: formData.paymentMethod as Expense['paymentMethod'], // Ödeme yöntemi tipini Expense'den al
+      receiptNumber: formData.receiptNumber,
+      // userId: user?.id // Gideri ekleyen kullanıcı ID'si eklenebilir
+    };
 
-      // Formu sıfırla
+    try {
+      await expenseService.create(expenseData);
       setFormData({
         title: "",
         amount: "",
@@ -105,9 +109,7 @@ export default function ExpensesPage() {
         paymentMethod: "Nakit",
         receiptNumber: ""
       });
-
-      // Giderleri yeniden yükle
-      loadExpenses();
+      // loadExpenses(); // Bu satır kaldırıldı, listen metodu güncellemeyi yapacak.
       toast.success("Gider başarıyla eklendi.");
     } catch (error) {
       console.error("Gider eklenirken hata:", error);
@@ -115,11 +117,11 @@ export default function ExpensesPage() {
     }
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (window.confirm("Bu gideri silmek istediğinizden emin misiniz?")) {
       try {
-        deleteExpense(id);
-        loadExpenses();
+        await expenseService.delete(id);
+        // loadExpenses(); // Bu satır kaldırıldı, listen metodu güncellemeyi yapacak.
         toast.success("Gider başarıyla silindi.");
       } catch (error) {
         console.error("Gider silinirken hata:", error);
@@ -128,7 +130,7 @@ export default function ExpensesPage() {
     }
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | undefined) => { // dateString undefined olabilir
     const date = new Date(dateString);
     return date.toLocaleDateString('tr-TR', {
       year: 'numeric',

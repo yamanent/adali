@@ -8,57 +8,55 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
+import { AppSettings, getSettings, saveSettings } from "@/lib/services/settingsService"; // settingsService'den import et
+import { useAuth } from "@/context/auth-context"; // AuthContext'i kullan
 
-interface Settings {
-  hotelName: string;
-  address: string;
-  phone: string;
-  email: string;
-  checkInTime: string;
-  checkOutTime: string;
-  enableNotifications: boolean;
-  darkMode: boolean;
-  language: string;
-}
+// Varsayılan ayarlar, eğer Firestore'dan hiç ayar gelmezse kullanılır.
+const defaultSettings: AppSettings = {
+  hotelName: "Otel Adı Girilmemiş",
+  address: "",
+  phone: "",
+  email: "",
+  checkInTime: "14:00",
+  checkOutTime: "12:00",
+  enableNotifications: true,
+  darkMode: false,
+  language: "tr",
+};
 
 export default function SettingsPage() {
   const [isLoading, setIsLoading] = useState(true);
-  const [settings, setSettings] = useState<Settings>({
-    hotelName: "Adalı Pansiyon",
-    address: "Sahil Caddesi No:123, Datça/Muğla",
-    phone: "+90 555 123 4567",
-    email: "info@adalipansiyon.com",
-    checkInTime: "14:00",
-    checkOutTime: "11:00",
-    enableNotifications: true,
-    darkMode: false,
-    language: "tr"
-  });
+  const [settings, setSettings] = useState<AppSettings>(defaultSettings);
   
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth(); // Auth context
 
   useEffect(() => {
-    // Oturum kontrolü
-    const isLoggedIn = localStorage.getItem("adminLoggedIn");
-    if (isLoggedIn !== "true") {
-      router.push("/admin");
-      return;
-    }
+    // if (authLoading) return;
+    // if (!user) {
+    //   router.push("/admin"); // Veya login
+    //   return;
+    // }
+    loadAppSettings();
+  }, [user, authLoading, router]);
 
-    loadSettings();
-  }, [router]);
-
-  const loadSettings = () => {
+  const loadAppSettings = async () => {
+    setIsLoading(true);
     try {
-      // LocalStorage'dan ayarları yükle
-      const savedSettings = localStorage.getItem("hotelSettings");
-      if (savedSettings) {
-        setSettings(JSON.parse(savedSettings));
+      const fetchedSettings = await getSettings();
+      if (fetchedSettings) {
+        setSettings(fetchedSettings);
+      } else {
+        // Firestore'da ayar yoksa, varsayılanları kullan ve belki bir kerelik kaydet?
+        // Şimdilik sadece state'i varsayılanlara ayarlıyoruz.
+        // İlk kaydetme işlemi kullanıcı tarafından yapılabilir.
+        setSettings(defaultSettings);
+        toast.info("Uygulama ayarları bulunamadı, varsayılan ayarlar yüklendi. Lütfen ayarları yapılandırıp kaydedin.");
       }
-      setIsLoading(false);
     } catch (error) {
       console.error("Ayarlar yüklenirken hata:", error);
       toast.error("Ayarlar yüklenirken bir hata oluştu.");
+    } finally {
       setIsLoading(false);
     }
   };
@@ -71,25 +69,27 @@ export default function SettingsPage() {
     }));
   };
 
-  const handleSwitchChange = (name: string, checked: boolean) => {
+  const handleSwitchChange = (name: keyof AppSettings, checked: boolean) => { // name tipini AppSettings key'i yap
     setSettings(prev => ({
       ...prev,
       [name]: checked
     }));
   };
 
-  const handleSaveSettings = () => {
+  const handleSaveSettings = async () => {
+    setIsLoading(true); // Kaydetme sırasında da yükleme göstergesi
     try {
-      // Ayarları localStorage'a kaydet
-      localStorage.setItem("hotelSettings", JSON.stringify(settings));
+      await saveSettings(settings);
       toast.success("Ayarlar başarıyla kaydedildi!");
     } catch (error) {
       console.error("Ayarlar kaydedilirken hata:", error);
       toast.error("Ayarlar kaydedilirken bir hata oluştu!");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  if (isLoading) {
+  if (isLoading || authLoading) { // authLoading de kontrol et
     return (
       <div className="flex items-center justify-center min-h-screen">
         <p>Yükleniyor...</p>
@@ -237,61 +237,18 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        {/* Yedekleme ve Veri */}
+        {/* Yedekleme ve Veri bölümü kaldırıldı */}
+        {/*
         <Card>
           <CardHeader>
             <CardTitle>Yedekleme ve Veri</CardTitle>
             <CardDescription>Veri yönetimi ve yedekleme seçenekleri.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <p className="text-sm text-gray-500 mb-4">Tüm verilerinizi yedekleyin veya sıfırlayın.</p>
-              
-              <div className="flex space-x-2">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    const data = {
-                      settings: settings,
-                      reservations: localStorage.getItem("reservations"),
-                      rooms: localStorage.getItem("rooms")
-                    };
-                    
-                    const dataStr = JSON.stringify(data);
-                    const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`;
-                    
-                    const exportFileDefaultName = `adali-pansiyon-yedek-${new Date().toISOString().split('T')[0]}.json`;
-                    
-                    const linkElement = document.createElement('a');
-                    linkElement.setAttribute('href', dataUri);
-                    linkElement.setAttribute('download', exportFileDefaultName);
-                    linkElement.click();
-                    
-                    toast.success("Veriler başarıyla indirildi!");
-                  }}
-                >
-                  Verileri İndir
-                </Button>
-                
-                <Button
-                  variant="destructive"
-                  onClick={() => {
-                    if (window.confirm("Tüm verileri sıfırlamak istediğinizden emin misiniz? Bu işlem geri alınamaz!")) {
-                      localStorage.removeItem("reservations");
-                      localStorage.removeItem("rooms");
-                      toast.success("Tüm veriler sıfırlandı!");
-                      setTimeout(() => {
-                        window.location.reload();
-                      }, 1500);
-                    }
-                  }}
-                >
-                  Verileri Sıfırla
-                </Button>
-              </div>
-            </div>
+             ...içerik...
           </CardContent>
         </Card>
+        */}
       </div>
 
       <div className="mt-6 flex justify-end">
