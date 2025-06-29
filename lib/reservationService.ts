@@ -1,5 +1,4 @@
 import { Reservation } from './models';
-import { demoReservations } from './demoData';
 
 // LocalStorage'da rezervasyonları saklamak için anahtar
 const RESERVATIONS_KEY = 'hotel_reservations';
@@ -9,11 +8,7 @@ export const getAllReservations = (): Reservation[] => {
   if (typeof window === 'undefined') return [];
   
   const reservationsJson = localStorage.getItem(RESERVATIONS_KEY);
-  if (!reservationsJson) {
-    // İlk kullanımda demo verileri yükle
-    localStorage.setItem(RESERVATIONS_KEY, JSON.stringify(demoReservations));
-    return demoReservations;
-  }
+  if (!reservationsJson) return [];
   
   try {
     return JSON.parse(reservationsJson);

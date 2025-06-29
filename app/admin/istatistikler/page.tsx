@@ -11,7 +11,6 @@ import { getAllExpenses, getExpensesByCategory, getTotalExpenses } from "@/lib/e
 import { useAuth } from "@/context/auth-context";
 import { UserRole } from "@/types/auth";
 import Unauthorized from "@/components/auth/unauthorized";
-import { getAllStatistics, getOccupancyRates, getChannelDistribution, getMonthlyRevenue, getMonthlyExpenses, calculateProfitForMonth, calculateProfitForAllMonths, calculateTotalRevenue, calculateTotalExpenses, calculateTotalProfit } from "@/lib/statisticsService";
 
 export default function StatisticsPage() {
   const [isLoading, setIsLoading] = useState(true);
@@ -38,10 +37,6 @@ export default function StatisticsPage() {
     try {
       const allReservations = getAllReservations();
       const allExpenses = getAllExpenses();
-      
-      // İstatistik verilerini de yükle
-      getAllStatistics();
-      
       setReservations(allReservations);
       setExpenses(allExpenses);
       setIsLoading(false);

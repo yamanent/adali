@@ -8,8 +8,10 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   login: (username: string, password: string) => Promise<boolean>;
+  guestLogin: (name: string, email: string) => Promise<boolean>;
   logout: () => void;
   isAuthenticated: boolean;
+  isGuest: boolean;
   hasPermission: (permissionCode: string) => boolean;
 }
 
@@ -125,12 +127,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return userPermissions.includes(permissionCode);
   };
 
+  // Misafir girişi fonksiyonu
+  const guestLogin = async (name: string, email: string): Promise<boolean> => {
+    setIsLoading(true);
+    try {
+      // Misafir kullanıcı oluştur
+      const guestUser: User = {
+        id: `guest-${Date.now()}`,
+        username: `guest-${Date.now()}`,
+        email: email,
+        role: UserRole.GUEST,
+        displayName: name,
+        createdAt: new Date(),
+        lastLogin: new Date(),
+        isGuest: true
+      };
+      
+      // Kullanıcı bilgilerini localStorage'a kaydet
+      localStorage.setItem("user", JSON.stringify(guestUser));
+      setUser(guestUser);
+      toast.success(`Hoş geldiniz, ${name}`);
+      return true;
+    } catch (error) {
+      console.error("Misafir girişi yapılırken hata:", error);
+      toast.error("Misafir girişi yapılırken bir hata oluştu");
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const value = {
     user,
     isLoading,
     login,
+    guestLogin,
     logout,
     isAuthenticated: !!user,
+    isGuest: user?.role === UserRole.GUEST,
     hasPermission
   };
 

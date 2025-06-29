@@ -6,7 +6,8 @@ export enum UserRole {
   MANAGER = 'manager',   // Yönetici yetkisi
   STAFF = 'staff',       // Personel yetkisi
   USER = 'user',         // Normal kullanıcı yetkisi
-  ADMIN = 'admin'        // Tam yetki
+  ADMIN = 'admin',       // Tam yetki
+  GUEST = 'guest'        // Misafir kullanıcı
 }
 
 export interface User {
@@ -17,6 +18,7 @@ export interface User {
   displayName: string;
   createdAt: Date;
   lastLogin?: Date;
+  isGuest?: boolean;
 }
 
 export interface Permission {
@@ -28,6 +30,13 @@ export interface Permission {
 
 // Her rol için izinler
 export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
+  [UserRole.GUEST]: [
+    'view:rooms',
+    'view:calendar',
+    'create:reservation',
+    'view:reservation',
+    'edit:own_reservation',
+  ],
   [UserRole.READER]: [
     'view:dashboard',
     'view:reservations',

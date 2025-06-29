@@ -1,5 +1,4 @@
 import { Room } from './models';
-import { demoRooms } from './demoData';
 
 // LocalStorage'da odaları saklamak için anahtar
 const ROOMS_KEY = 'hotel_rooms';
@@ -24,9 +23,10 @@ export const getAllRooms = (): Room[] => {
   
   const roomsJson = localStorage.getItem(ROOMS_KEY);
   if (!roomsJson) {
-    // Eğer odalar yoksa, demo odaları kaydet
-    localStorage.setItem(ROOMS_KEY, JSON.stringify(demoRooms));
-    return demoRooms;
+    // Eğer odalar yoksa, varsayılan odaları oluştur ve kaydet
+    const defaultRooms = createDefaultRooms();
+    localStorage.setItem(ROOMS_KEY, JSON.stringify(defaultRooms));
+    return defaultRooms;
   }
   
   try {
