@@ -1,42 +1,23 @@
-// Rezervasyon modeli
-export interface Reservation {
-  id: string;
-  guestName: string;
-  phone: string;
-  email?: string;
-  checkInDate: string;
-  checkOutDate: string;
-  roomNumber: string;
-  roomType: string;
-  guestCount: number;
-  totalPrice: number;
-  paymentStatus: 'Ödendi' | 'Kısmi' | 'Bekliyor';
-  reservationChannel: 'Booking.com' | 'Airbnb' | 'Website' | 'Telefon' | 'WhatsApp' | 'Sosyal Medya' | 'Walk-in' | 'Diğer';
-  notes?: string;
-  createdAt: string;
-  updatedAt: string;
-}
+// Bu dosyadaki modellerin güncel ve kapsamlı versiyonları lib/types.ts içerisindedir.
+// Mevcut importların kırılmaması için buradan yeniden dışa aktarılmaktadır.
+// Yeni geliştirmelerde doğrudan lib/types.ts içerisindeki tanımlamaları kullanın.
 
-// Oda modeli
-export interface Room {
-  id: string;
-  number: string;
-  type: string;
-  capacity: number;
-  price: number;
-  status: 'Boş' | 'Dolu' | 'Temizlik' | 'Bakım';
-}
+export type {
+  Reservation,
+  ReservationStatus,
+  PaymentStatus,
+  BookingSource,
+  Room,
+  RoomStatus,
+  RoomType,
+  Expense,
+  ExpenseCategory,
+  PaymentMethod,
+  Guest, // Guest modeli de artık lib/types.ts altında.
+  DateRange,
+  CalendarFilters,
+} from './types';
 
-// Gider modeli
-export interface Expense {
-  id: string;
-  title: string;
-  amount: number;
-  category: 'Personel' | 'Elektrik' | 'Su' | 'Doğalgaz' | 'İnternet' | 'Temizlik' | 'Bakım' | 'Gıda' | 'Diğer';
-  date: string;
-  description?: string;
-  paymentMethod: 'Nakit' | 'Kredi Kartı' | 'Banka Transferi' | 'Diğer';
-  receiptNumber?: string;
-  createdAt: string;
-  updatedAt: string;
-}
+// Diğer eski model tanımlamaları veya bu dosyada kalması gereken özel bir tanım yoksa,
+// bu dosya ileride tamamen kaldırılabilir ve importlar doğrudan lib/types.ts'e yönlendirilebilir.
+// Şimdilik, geçiş sürecini kolaylaştırmak için bu şekilde bırakılmıştır.

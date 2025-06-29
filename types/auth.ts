@@ -121,7 +121,5 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
 };
 
 // Kullanıcının belirli bir izne sahip olup olmadığını kontrol eden yardımcı fonksiyon
-export function hasPermission(user: User, permissionCode: string): boolean {
-  const userPermissions = ROLE_PERMISSIONS[user.role] || [];
-  return userPermissions.includes(permissionCode);
-}
+// Bu fonksiyon context/auth-context.tsx içerisinde implemente edildiği için burada kaldırılmıştır.
+// İzin kontrolü için useAuth() hook'u kullanılmalıdır.

@@ -1,5 +1,11 @@
 "use client";
 
+// Admin Paneli Giriş ve Kayıt Sayfası
+// Bu sayfa, Firebase Authentication kullanarak yöneticilerin sisteme
+// giriş yapmasını veya yeni yönetici hesabı oluşturmasını sağlar.
+// `useAuth` hook'u (context/auth-context.tsx) aracılığıyla Firebase
+// kimlik doğrulama fonksiyonlarına (login, register) erişir.
+
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
