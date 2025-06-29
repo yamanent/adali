@@ -4,6 +4,8 @@ export enum UserRole {
   READER = 'reader',     // Sadece okuma yetkisi
   EDITOR = 'editor',     // Düzenleme yetkisi
   MANAGER = 'manager',   // Yönetici yetkisi
+  STAFF = 'staff',       // Personel yetkisi
+  USER = 'user',         // Normal kullanıcı yetkisi
   ADMIN = 'admin'        // Tam yetki
 }
 
@@ -47,6 +49,22 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     'edit:reservation',
     'create:guest',
     'edit:guest',
+  ],
+  [UserRole.STAFF]: [
+    // Personel izinleri
+    'view:dashboard',
+    'view:reservations',
+    'view:calendar',
+    'view:rooms',
+    'view:guests',
+    'create:reservation',
+    'edit:reservation',
+  ],
+  [UserRole.USER]: [
+    // Normal kullanıcı izinleri
+    'view:dashboard',
+    'view:reservations',
+    'view:calendar',
   ],
   [UserRole.MANAGER]: [
     // Editor izinleri

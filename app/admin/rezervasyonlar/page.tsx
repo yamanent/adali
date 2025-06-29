@@ -97,16 +97,16 @@ export default function ReservationsPage() {
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Rezervasyonlar</h1>
-        <Button onClick={() => router.push("/admin/dashboard")} variant="outline">
+    <div className="container mx-auto py-4 sm:py-8 px-2 sm:px-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0 mb-4 sm:mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold">Rezervasyonlar</h1>
+        <Button onClick={() => router.push("/admin/dashboard")} variant="outline" className="w-full sm:w-auto">
           Dashboard'a Dön
         </Button>
       </div>
 
       <Tabs defaultValue="list">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-2 text-xs sm:text-sm">
           <TabsTrigger value="list">Rezervasyon Listesi</TabsTrigger>
           <TabsTrigger value="new">Yeni Rezervasyon</TabsTrigger>
         </TabsList>
@@ -119,22 +119,23 @@ export default function ReservationsPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex flex-col md:flex-row gap-2 sm:gap-4">
                   <div className="flex-1">
-                    <Label htmlFor="search">Ara</Label>
+                    <Label htmlFor="search" className="text-sm">Ara</Label>
                     <Input
                       id="search"
                       placeholder="İsim veya telefon numarası..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
+                      className="text-sm"
                     />
                   </div>
                   
-                  <div>
-                    <Label htmlFor="channel">Rezervasyon Kanalı</Label>
+                  <div className="w-full md:w-auto">
+                    <Label htmlFor="channel" className="text-sm">Rezervasyon Kanalı</Label>
                     <select
                       id="channel"
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="flex h-9 sm:h-10 w-full rounded-md border border-input bg-background px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                       value={filterChannel || ""}
                       onChange={(e) => setFilterChannel(e.target.value || null)}
                     >
@@ -166,24 +167,26 @@ export default function ReservationsPage() {
                   </div>
                 </div>
                 
-                <div className="flex flex-col md:flex-row gap-4">
-                  <div>
-                    <Label htmlFor="dateStart">Başlangıç Tarihi</Label>
+                <div className="flex flex-col md:flex-row gap-2 sm:gap-4">
+                  <div className="w-full md:w-auto">
+                    <Label htmlFor="dateStart" className="text-sm">Başlangıç Tarihi</Label>
                     <Input
                       id="dateStart"
                       type="date"
                       value={dateRangeStart}
                       onChange={(e) => setDateRangeStart(e.target.value)}
+                      className="text-sm"
                     />
                   </div>
                   
-                  <div>
-                    <Label htmlFor="dateEnd">Bitiş Tarihi</Label>
+                  <div className="w-full md:w-auto">
+                    <Label htmlFor="dateEnd" className="text-sm">Bitiş Tarihi</Label>
                     <Input
                       id="dateEnd"
                       type="date"
                       value={dateRangeEnd}
                       onChange={(e) => setDateRangeEnd(e.target.value)}
+                      className="text-sm"
                     />
                   </div>
                   

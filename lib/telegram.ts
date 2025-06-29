@@ -1,4 +1,4 @@
-// Telegram API için yardımcı fonksiyonlar
+// Telegram API için yardımcı fonksiyonlar - Sadece iletişim formu için
 export interface TelegramConfig {
   botToken: string;
   chatId: string;
@@ -65,65 +65,6 @@ export async function sendTelegramMessage(
   } catch (error) {
     console.error("Telegram mesaj gönderme hatası:", error);
     return false;
-  }
-}
-
-/**
- * Admin giriş log mesajı oluşturur ve Telegram'a gönderir
- * @param username Kullanıcı adı
- * @param success Giriş başarılı mı?
- * @param ip IP adresi
- */
-export async function logAdminLogin(
-  username: string,
-  success: boolean,
-  ip: string
-): Promise<void> {
-  const timestamp = new Date().toLocaleString("tr-TR");
-  const status = success ? "✅ Başarılı" : "❌ Başarısız";
-  
-  const message = `
-<b>🔐 Admin Giriş Denemesi</b>
-<b>Durum:</b> ${status}
-<b>Kullanıcı:</b> ${username}
-<b>IP:</b> ${ip}
-<b>Tarih:</b> ${timestamp}
-`;
-
-  await sendTelegramMessage(message);
-}
-
-/**
- * Admin paneli erişim log mesajı oluşturur ve Telegram'a gönderir
- * @param username Kullanıcı adı
- * @param page Erişilen sayfa
- * @param ip IP adresi
- */
-export async function logAdminAccess(
-  username: string = "admin",
-  page: string = "bilinmeyen sayfa",
-  ip: string = "bilinmeyen"
-): Promise<void> {
-  try {
-    const timestamp = new Date().toLocaleString("tr-TR");
-    
-    const message = `
-<b>👁️ Admin Paneli Erişimi</b>
-<b>Kullanıcı:</b> ${username}
-<b>Sayfa:</b> ${page}
-<b>IP:</b> ${ip}
-<b>Tarih:</b> ${timestamp}
-`;
-
-    // Mesajı göndermeyi dene, hata olursa yakala ve devam et
-    try {
-      await sendTelegramMessage(message);
-    } catch (telegramError) {
-      console.warn("Telegram mesajı gönderilemedi, ancak işlem devam ediyor:", telegramError);
-    }
-  } catch (error) {
-    console.error("Admin erişim logu gönderilemedi:", error);
-    // Hata olsa bile devam et
   }
 }
 

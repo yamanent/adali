@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { logAdminLogin } from "@/lib/telegram";
 
 // Sabit kullanıcı bilgileri (gerçek uygulamada bu bilgiler güvenli bir şekilde saklanmalıdır)
 const ADMIN_USERNAME = "admin";
@@ -18,13 +17,13 @@ export async function POST(request: NextRequest) {
     
     // Kullanıcı doğrulama
     if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-      // Başarılı giriş logu - Telegram'a gönder
-      await logAdminLogin(username, true, ip.toString());
+      // Başarılı giriş
+      console.log(`Başarılı giriş: ${username} (${ip})`);
       
       return NextResponse.json({ success: true, message: "Giriş başarılı" }, { status: 200 });
     } else {
-      // Başarısız giriş logu - Telegram'a gönder
-      await logAdminLogin(username || "unknown", false, ip.toString());
+      // Başarısız giriş
+      console.log(`Başarısız giriş denemesi: ${username || "unknown"} (${ip})`);
       
       return NextResponse.json({ success: false, message: "Geçersiz kullanıcı adı veya şifre" }, { status: 401 });
     }

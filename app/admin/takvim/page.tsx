@@ -82,10 +82,10 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Rezervasyon Takvimi</h1>
-        <Button onClick={() => router.push("/admin/dashboard")} variant="outline">
+    <div className="container mx-auto py-4 sm:py-8 px-2 sm:px-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0 mb-4 sm:mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold">Rezervasyon Takvimi</h1>
+        <Button onClick={() => router.push("/admin/dashboard")} variant="outline" className="w-full sm:w-auto">
           Dashboard'a Dön
         </Button>
       </div>
@@ -101,21 +101,21 @@ export default function CalendarPage() {
               <div className="flex border rounded-md overflow-hidden">
                 <Button 
                   variant={viewMode === 'day' ? "default" : "ghost"}
-                  className="rounded-none"
+                  className="rounded-none text-xs sm:text-sm py-1 h-auto"
                   onClick={() => setViewMode('day')}
                 >
                   Gün
                 </Button>
                 <Button 
                   variant={viewMode === 'week' ? "default" : "ghost"}
-                  className="rounded-none"
+                  className="rounded-none text-xs sm:text-sm py-1 h-auto"
                   onClick={() => setViewMode('week')}
                 >
                   Hafta
                 </Button>
                 <Button 
                   variant={viewMode === 'month' ? "default" : "ghost"}
-                  className="rounded-none"
+                  className="rounded-none text-xs sm:text-sm py-1 h-auto"
                   onClick={() => setViewMode('month')}
                 >
                   Ay
@@ -125,19 +125,19 @@ export default function CalendarPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="flex justify-between items-center mb-4">
-            <div className="flex items-center space-x-2">
-              <Button variant="outline" size="sm" onClick={handlePrevious}>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
+            <div className="flex items-center space-x-1 sm:space-x-2 w-full sm:w-auto">
+              <Button variant="outline" size="sm" onClick={handlePrevious} className="text-xs sm:text-sm py-1 h-auto">
                 &lt; Önceki
               </Button>
-              <Button variant="outline" size="sm" onClick={handleToday}>
+              <Button variant="outline" size="sm" onClick={handleToday} className="text-xs sm:text-sm py-1 h-auto">
                 Bugün
               </Button>
-              <Button variant="outline" size="sm" onClick={handleNext}>
+              <Button variant="outline" size="sm" onClick={handleNext} className="text-xs sm:text-sm py-1 h-auto">
                 Sonraki &gt;
               </Button>
             </div>
-            <div className="text-lg font-medium">
+            <div className="text-base sm:text-lg font-medium">
               {currentDate.toLocaleDateString('tr-TR', { 
                 month: 'long', 
                 year: 'numeric',
@@ -146,7 +146,7 @@ export default function CalendarPage() {
             </div>
           </div>
           
-          <div className="overflow-x-auto" style={{ position: 'relative' }}>
+          <div className="overflow-x-auto -mx-4 sm:mx-0" style={{ position: 'relative' }}>
             <div className="sticky left-0 z-10" style={{ width: '100%', overflowX: 'auto' }}>
               <CalendarView 
                 reservations={reservations}

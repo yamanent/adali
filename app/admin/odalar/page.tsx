@@ -147,10 +147,10 @@ export default function RoomsPage() {
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Odalar Yönetimi</h1>
-        <Button onClick={() => router.push("/admin/dashboard")} variant="outline">
+    <div className="container mx-auto py-4 sm:py-8 px-2 sm:px-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0 mb-4 sm:mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold">Odalar Yönetimi</h1>
+        <Button onClick={() => router.push("/admin/dashboard")} variant="outline" className="w-full sm:w-auto">
           Dashboard'a Dön
         </Button>
       </div>
@@ -179,16 +179,16 @@ export default function RoomsPage() {
         </CardHeader>
         <CardContent>
           {rooms.length > 0 ? (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto -mx-4 sm:mx-0">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Oda No</TableHead>
-                    <TableHead>Oda Tipi</TableHead>
-                    <TableHead>Kapasite</TableHead>
-                    <TableHead>Fiyat</TableHead>
-                    <TableHead>Durum</TableHead>
-                    <TableHead>İşlemler</TableHead>
+                    <TableHead className="whitespace-nowrap">Oda No</TableHead>
+                    <TableHead className="whitespace-nowrap">Oda Tipi</TableHead>
+                    <TableHead className="whitespace-nowrap">Kapasite</TableHead>
+                    <TableHead className="whitespace-nowrap">Fiyat</TableHead>
+                    <TableHead className="whitespace-nowrap">Durum</TableHead>
+                    <TableHead className="whitespace-nowrap">İşlemler</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -209,11 +209,12 @@ export default function RoomsPage() {
                         </span>
                       </TableCell>
                       <TableCell>
-                        <div className="flex space-x-2">
+                        <div className="flex flex-col xs:flex-row space-y-1 xs:space-y-0 xs:space-x-2">
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => handleEditRoom(room)}
+                            className="text-xs py-1 h-auto"
                           >
                             Düzenle
                           </Button>
@@ -221,6 +222,7 @@ export default function RoomsPage() {
                             variant="destructive"
                             size="sm"
                             onClick={() => handleDeleteRoom(room.id)}
+                            className="text-xs py-1 h-auto"
                           >
                             Sil
                           </Button>
