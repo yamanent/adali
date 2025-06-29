@@ -114,25 +114,26 @@ export default function ReservationsPage() {
     };
   });
 
+  // Rezervasyon kanalı filtresi kaldırıldı (modelde yok)
+
+  // Filtreleme işlemi
   const filteredReservations = enrichedReservations.filter(res => {
+    // Arama terimi kontrolü
     const searchLower = searchTerm.toLowerCase();
-    // Misafir adı, email veya telefon ile arama
     const searchMatch = searchTerm === "" || 
       res.guestName.toLowerCase().includes(searchLower) ||
       (res.guestEmail && res.guestEmail.toLowerCase().includes(searchLower)) ||
       (res.guestPhone && res.guestPhone.includes(searchLower));
     
-    // Rezervasyon kanalına göre filtreleme (kaldırıldı, modelde yok)
-    // const channelMatch = !filterChannel || res.reservationChannel === filterChannel;
-    
-    // Ödeme durumuna göre filtreleme
+    // Ödeme durumu kontrolü
     const paymentMatch = !filterPaymentStatus || res.paymentStatus === filterPaymentStatus;
     
-    // Tarih aralığına göre filtreleme
+    // Tarih aralığı kontrolü
     const dateMatch = (!dateRangeStart || !dateRangeEnd) || 
       (res.checkInDate >= dateRangeStart && res.checkOutDate <= dateRangeEnd);
     
-    return searchMatch && channelMatch && paymentMatch && dateMatch;
+    // Tüm filtrelerin birleşimi
+    return searchMatch && paymentMatch && dateMatch;
   });
 
   if (isLoading) {

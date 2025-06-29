@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Reservation, Expense } from "@/lib/models";
-import { getAllReservations } from "@/lib/reservationService";
+import { Reservation } from "@/lib/firebase-models";
+import { Expense } from "@/lib/models";
+import { getAllReservations, getReservationStatistics } from "@/lib/reservation-service";
 import { getAllExpenses, getExpensesByCategory, getTotalExpenses } from "@/lib/expenseService";
 import { useAuth } from "@/context/auth-context";
 import { UserRole } from "@/types/auth";
@@ -33,13 +34,18 @@ export default function StatisticsPage() {
     loadReservations();
   }, [router, isAuthenticated]);
 
-  const loadReservations = () => {
+  const loadReservations = async () => {
     try {
-      const allReservations = getAllReservations();
+      const allReservations = await getAllReservations();
+      const stats = await getReservationStatistics();
       const allExpenses = getAllExpenses();
+      
       setReservations(allReservations);
       setExpenses(allExpenses);
       setIsLoading(false);
+      
+      // İstatistikleri konsola yazdırarak kontrol edelim
+      console.log("Rezervasyon istatistikleri:", stats);
     } catch (error) {
       console.error("Veriler yüklenirken hata:", error);
       toast.error("Veriler yüklenirken bir hata oluştu.");
@@ -85,7 +91,7 @@ export default function StatisticsPage() {
     const channelRevenue: Record<string, number> = {};
     
     filteredReservations.forEach(res => {
-      const channel = res.reservationChannel;
+      const channel = res.source || 'Doğrudan';
       channelCounts[channel] = (channelCounts[channel] || 0) + 1;
       channelRevenue[channel] = (channelRevenue[channel] || 0) + res.totalPrice;
     });
@@ -114,10 +120,10 @@ export default function StatisticsPage() {
            d.setDate(d.getDate() + 1)) {
         
         const dateStr = d.toISOString().split('T')[0];
-        if (!roomOccupancy[res.roomNumber]) {
-          roomOccupancy[res.roomNumber] = new Set();
+        if (!roomOccupancy[res.roomId]) {
+          roomOccupancy[res.roomId] = new Set();
         }
-        roomOccupancy[res.roomNumber].add(dateStr);
+        roomOccupancy[res.roomId].add(dateStr);
       }
     });
     

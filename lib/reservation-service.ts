@@ -1,7 +1,19 @@
 // Rezervasyon servis fonksiyonları
 
-import { firestore } from "./firebase"; // Assuming firestore is correctly initialized in firebase.ts
-import { collection, query, where, orderBy, getDocs, Timestamp, addDoc, updateDoc, doc, deleteDoc, getDoc } from "firebase/firestore";
+import { firestore } from "./firebase"; // Firestore mock servisi
+import { 
+  collection, 
+  query, 
+  where, 
+  orderBy, 
+  getDocs, 
+  Timestamp, 
+  addDoc, 
+  updateDoc, 
+  doc, 
+  deleteDoc, 
+  getDoc 
+} from "./firebase-service"; // Firebase modüllerini mock servisimizden içe aktarıyoruz
 import { Reservation, Room } from "./firebase-models"; // Guest model is not directly used here anymore for embedding
 import { getById, getAll, getFiltered, create, update, remove } from "./firebase-service";
 import { getGuest } from "./guest-service"; // Import guest service to fetch guest details

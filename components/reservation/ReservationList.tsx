@@ -1,16 +1,7 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Reservation } from "@/lib/firebase-models"; // Use model from firebase-models
+import { Reservation, EnrichedReservation } from "@/lib/firebase-models";
 import { formatDate } from "@/lib/utils"; // Assuming this handles ISO strings
-
-// Define EnrichedReservation directly here or import from a central types file
-export interface EnrichedReservation extends Reservation {
-  guestName: string;
-  guestEmail?: string;
-  guestPhone?: string;
-  roomName?: string; // If room details are also enriched
-  roomType?: string; // If room details are also enriched
-}
 
 interface ReservationListProps {
   reservations: EnrichedReservation[];
@@ -22,11 +13,11 @@ export default function ReservationList({ reservations, onDelete, onEdit }: Rese
   // Ödeme durumuna göre renk sınıfı belirle
   const getPaymentStatusClass = (status: Reservation['paymentStatus']) => {
     switch (status) {
-      case "paid":
+      case "Ödendi":
         return "bg-green-100 text-green-800";
-      case "partial":
+      case "Kısmi Ödeme":
         return "bg-yellow-100 text-yellow-800";
-      case "unpaid":
+      case "Bekliyor":
         return "bg-red-100 text-red-800";
       default:
         return "";
@@ -36,13 +27,13 @@ export default function ReservationList({ reservations, onDelete, onEdit }: Rese
   // Rezervasyon durumuna göre renk sınıfı belirle
   const getStatusClass = (status: Reservation['status']) => {
     switch (status) {
-      case "confirmed":
+      case "Onaylandı":
         return "bg-blue-100 text-blue-800";
-      case "pending":
+      case "Beklemede":
         return "bg-yellow-100 text-yellow-800";
-      case "cancelled":
+      case "İptal Edildi":
         return "bg-red-100 text-red-800";
-      case "completed":
+      case "Tamamlandı":
         return "bg-green-100 text-green-800";
       default:
         return "bg-gray-100 text-gray-800";
@@ -62,8 +53,8 @@ export default function ReservationList({ reservations, onDelete, onEdit }: Rese
             <TableHead>Misafir</TableHead>
             <TableHead>İletişim</TableHead>
             <TableHead>Giriş-Çıkış</TableHead>
-            <TableHead>Oda</TableHead> {/* Oda Adı/No - Tipi */}
-            <TableHead>Kişi</TableHead> {/* Yetişkin+Çocuk */}
+            <TableHead>Oda</TableHead>
+            <TableHead>Kişi</TableHead>
             <TableHead>Ücret</TableHead>
             <TableHead>Ödeme Durumu</TableHead>
             <TableHead>Rez. Durumu</TableHead>
@@ -85,19 +76,19 @@ export default function ReservationList({ reservations, onDelete, onEdit }: Rese
                 <div>{formatDate(reservation.checkOutDate)}</div>
               </TableCell>
               <TableCell>
-                {reservation.roomName || reservation.roomId} {/* Oda adı varsa göster, yoksa ID */}
+                {reservation.roomName || reservation.roomId}
                 {reservation.roomType && <div className="text-xs text-gray-500">{reservation.roomType}</div>}
               </TableCell>
               <TableCell>{reservation.adults + (reservation.children || 0)}</TableCell>
               <TableCell>{reservation.totalPrice.toLocaleString('tr-TR')} ₺</TableCell>
               <TableCell>
                 <span className={`px-2 py-1 rounded-full text-xs ${getPaymentStatusClass(reservation.paymentStatus)}`}>
-                  {reservation.paymentStatus === 'paid' ? 'Ödendi' : reservation.paymentStatus === 'partial' ? 'Kısmi Ödeme' : 'Ödenmedi'}
+                  {reservation.paymentStatus}
                 </span>
               </TableCell>
               <TableCell>
                 <span className={`px-2 py-1 rounded-full text-xs ${getStatusClass(reservation.status)}`}>
-                  {reservation.status === 'confirmed' ? 'Onaylandı' : reservation.status === 'pending' ? 'Beklemede' : reservation.status === 'cancelled' ? 'İptal' : 'Tamamlandı'}
+                  {reservation.status}
                 </span>
               </TableCell>
               <TableCell>

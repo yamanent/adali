@@ -48,8 +48,6 @@ export default function ReservationForm({ reservation, onSave, onCancel }: Reser
     notes: ""
   });
 
-  });
-
   const fetchRoomsAndGuests = useCallback(async () => {
     try {
       const roomData = await getAllRooms(); // roomService'den odaları al

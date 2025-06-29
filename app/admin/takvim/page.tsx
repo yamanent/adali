@@ -5,14 +5,14 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Reservation } from "@/lib/models";
-import { getAllReservations } from "@/lib/reservationService";
-import { getAllRooms } from "@/lib/roomService";
+import { Reservation } from "@/lib/firebase-models";
+import { getAllReservations } from "@/lib/reservation-service";
+import { getAllRooms, initializeDefaultRooms } from "@/lib/room-service";
 import CalendarView from "@/components/reservation/CalendarView";
 
 export default function CalendarPage() {
   const [isLoading, setIsLoading] = useState(true);
-  const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [reservations, setReservations] = useState<any[]>([]);
   const [rooms, setRooms] = useState<{id: string, number: string, type: string}[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('week');
@@ -30,13 +30,20 @@ export default function CalendarPage() {
     loadData();
   }, [router]);
 
-  const loadData = () => {
+  const loadData = async () => {
     try {
-      const allReservations = getAllReservations();
-      const allRooms = getAllRooms();
+      // Önce varsayılan odaları oluşturalım
+      await initializeDefaultRooms();
+      
+      const allReservations = await getAllReservations();
+      const allRooms = await getAllRooms();
       
       setReservations(allReservations);
-      setRooms(allRooms.map(room => ({ id: room.id, number: room.number, type: room.type })));
+      setRooms(allRooms.map(room => ({ 
+        id: room.id, 
+        number: room.roomNumber, 
+        type: room.type
+      })));
       setIsLoading(false);
     } catch (error) {
       console.error("Veriler yüklenirken hata:", error);
