@@ -1,9 +1,10 @@
 // Rezervasyon servis fonksiyonları
 
-import { firestore } from "./firebase";
+import { firestore } from "./firebase"; // Assuming firestore is correctly initialized in firebase.ts
 import { collection, query, where, orderBy, getDocs, Timestamp, addDoc, updateDoc, doc, deleteDoc, getDoc } from "firebase/firestore";
-import { Reservation, Room, Guest } from "./firebase-models";
+import { Reservation, Room } from "./firebase-models"; // Guest model is not directly used here anymore for embedding
 import { getById, getAll, getFiltered, create, update, remove } from "./firebase-service";
+import { getGuest } from "./guest-service"; // Import guest service to fetch guest details
 
 // Koleksiyon adları
 const RESERVATIONS_COLLECTION = "reservations";
@@ -88,6 +89,29 @@ export async function deleteReservation(id: string): Promise<void> {
 export async function updateReservationStatus(id: string, status: Reservation['status']): Promise<void> {
   await update<Reservation>(RESERVATIONS_COLLECTION, id, { status });
 }
+
+/**
+ * Retrieves a specific reservation by its ID, along with the guest details.
+ */
+export async function getReservationWithGuestDetails(reservationId: string): Promise<{ reservation: Reservation; guest: Guest | null } | null> {
+  try {
+    const reservation = await getById<Reservation>(RESERVATIONS_COLLECTION, reservationId);
+    if (!reservation) {
+      return null;
+    }
+
+    let guest = null;
+    if (reservation.guestId) {
+      guest = await getGuest(reservation.guestId);
+    }
+
+    return { reservation, guest };
+  } catch (error) {
+    console.error("Error fetching reservation with guest details:", error);
+    throw new Error("Failed to retrieve reservation with guest details.");
+  }
+}
+
 
 /**
  * Bir rezervasyonun ödeme durumunu günceller

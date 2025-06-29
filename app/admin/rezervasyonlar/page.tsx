@@ -8,17 +8,26 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Reservation } from "@/lib/models";
-import { getAllReservations, deleteReservation } from "@/lib/reservationService";
+// Reservation ve Guest modellerini firebase-models'dan al
+import { Reservation, Guest } from "@/lib/firebase-models";
+import {
+  getAllReservations,
+  deleteReservation,
+  updateReservationStatus, // Ekledik, gerekebilir
+  // createReservation, updateReservation // Bunlar form içinde yönetiliyor artık
+} from "@/lib/reservation-service"; // reservation-service.ts kullanılıyor
+import { listGuests } from "@/lib/guest-service"; // Misafirleri çekmek için
 import ReservationForm from "@/components/reservation/ReservationForm";
-import ReservationList from "@/components/reservation/ReservationList";
+import ReservationList, { EnrichedReservation } from "@/components/reservation/ReservationList"; // EnrichedReservation tipini al
 
 export default function ReservationsPage() {
   const [isLoading, setIsLoading] = useState(true);
-  const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [reservations, setReservations] = useState<Reservation[]>([]); // Ham rezervasyonlar
+  const [allGuestsMap, setAllGuestsMap] = useState<Map<string, Guest>>(new Map()); // Misafirleri map olarak tut
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterChannel, setFilterChannel] = useState<string | null>(null);
+  // filterChannel Reservation modelinde yok, eğer kullanılacaksa modele eklenmeli. Şimdilik kaldırıyorum.
+  // const [filterChannel, setFilterChannel] = useState<string | null>(null);
   const [filterPaymentStatus, setFilterPaymentStatus] = useState<string | null>(null);
   const [dateRangeStart, setDateRangeStart] = useState<string>("");
   const [dateRangeEnd, setDateRangeEnd] = useState<string>("");
@@ -26,57 +35,95 @@ export default function ReservationsPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Oturum kontrolü
+    // TODO: Replace with proper AuthContext check and RoleGate/protected route
+    // Oturum kontrolü (AuthContext ile değiştirilecek)
     const isLoggedIn = localStorage.getItem("adminLoggedIn");
     if (isLoggedIn !== "true") {
       router.push("/admin");
       return;
     }
-
-    loadReservations();
+    loadInitialData();
   }, [router]);
 
-  const loadReservations = () => {
+  const loadInitialData = async () => {
+    setIsLoading(true);
     try {
-      const allReservations = getAllReservations();
-      setReservations(allReservations);
-      setIsLoading(false);
+      const [reservationsData, guestsData] = await Promise.all([
+        getAllReservations(),
+        listGuests()
+      ]);
+
+      setReservations(reservationsData);
+
+      const guestMap = new Map<string, Guest>();
+      guestsData.forEach(guest => guestMap.set(guest.id, guest));
+      setAllGuestsMap(guestMap);
+
     } catch (error) {
-      console.error("Rezervasyonlar yüklenirken hata:", error);
-      toast.error("Rezervasyonlar yüklenirken bir hata oluştu.");
+      console.error("Veri yüklenirken hata:", error);
+      toast.error("Rezervasyonlar veya misafirler yüklenirken bir hata oluştu.");
+    } finally {
       setIsLoading(false);
     }
   };
 
-  const handleDeleteReservation = (id: string) => {
+  const handleDeleteReservation = async (id: string) => {
     if (window.confirm("Bu rezervasyonu silmek istediğinize emin misiniz?")) {
-      const success = deleteReservation(id);
-      if (success) {
+      try {
+        await deleteReservation(id);
         toast.success("Rezervasyon başarıyla silindi.");
-        loadReservations();
-      } else {
+        loadInitialData(); // Veriyi yeniden yükle
+      } catch (error) {
         toast.error("Rezervasyon silinirken bir hata oluştu.");
+        console.error("Error deleting reservation:", error);
       }
     }
   };
 
+  // handleEditReservation direkt ReservationForm'a selectedReservation'ı set edecek şekilde Tabs içinde ele alınabilir
+  // veya bir Tab state'i ile yönetilebilir. Şimdilik bu fonksiyonu ReservationList prop'u olarak bırakıyorum.
   const handleEditReservation = (reservation: Reservation) => {
     setSelectedReservation(reservation);
+    // Yeni Rezervasyon sekmesine geçiş yapmak için bir yol gerekebilir.
+    // Örneğin: document.querySelector('[data-radix-collection-item][value="new"]')?.click();
+    // Ya da Tabs'ın value'sunu state ile yönetip onu değiştirebiliriz.
+    // Şimdilik, kullanıcı manuel olarak sekmeyi değiştirecek varsayalım.
+    const newTabTrigger = document.querySelector('[data-radix-collection-item][value="new"]') as HTMLButtonElement | null;
+    if (newTabTrigger) {
+        newTabTrigger.click(); // Programmatically click the "Yeni Rezervasyon" tab
+    }
   };
+
 
   const handleReservationSaved = () => {
     setSelectedReservation(null);
-    loadReservations();
+    loadInitialData(); // Veriyi yeniden yükle
+     const listTabTrigger = document.querySelector('[data-radix-collection-item][value="list"]') as HTMLButtonElement | null;
+    if (listTabTrigger) {
+        listTabTrigger.click();
+    }
   };
 
-  const filteredReservations = reservations.filter(res => {
-    // İsim veya telefon numarasına göre arama
+  const enrichedReservations: EnrichedReservation[] = reservations.map(res => {
+    const guest = allGuestsMap.get(res.guestId);
+    return {
+      ...res,
+      guestName: guest ? `${guest.firstName} ${guest.lastName}` : "Bilinmeyen Misafir",
+      guestEmail: guest?.email || "",
+      guestPhone: guest?.phone || "",
+    };
+  });
+
+  const filteredReservations = enrichedReservations.filter(res => {
+    const searchLower = searchTerm.toLowerCase();
+    // Misafir adı, email veya telefon ile arama
     const searchMatch = searchTerm === "" || 
-      res.guestName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      res.phone.includes(searchTerm);
+      res.guestName.toLowerCase().includes(searchLower) ||
+      (res.guestEmail && res.guestEmail.toLowerCase().includes(searchLower)) ||
+      (res.guestPhone && res.guestPhone.includes(searchLower));
     
-    // Rezervasyon kanalına göre filtreleme
-    const channelMatch = !filterChannel || res.reservationChannel === filterChannel;
+    // Rezervasyon kanalına göre filtreleme (kaldırıldı, modelde yok)
+    // const channelMatch = !filterChannel || res.reservationChannel === filterChannel;
     
     // Ödeme durumuna göre filtreleme
     const paymentMatch = !filterPaymentStatus || res.paymentStatus === filterPaymentStatus;
@@ -130,39 +177,19 @@ export default function ReservationsPage() {
                       className="text-sm"
                     />
                   </div>
-                  
+
                   <div className="w-full md:w-auto">
-                    <Label htmlFor="channel" className="text-sm">Rezervasyon Kanalı</Label>
-                    <select
-                      id="channel"
-                      className="flex h-9 sm:h-10 w-full rounded-md border border-input bg-background px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      value={filterChannel || ""}
-                      onChange={(e) => setFilterChannel(e.target.value || null)}
-                    >
-                      <option value="">Tümü</option>
-                      <option value="Booking.com">Booking.com</option>
-                      <option value="Airbnb">Airbnb</option>
-                      <option value="Website">Website</option>
-                      <option value="Telefon">Telefon</option>
-                      <option value="WhatsApp">WhatsApp</option>
-                      <option value="Sosyal Medya">Sosyal Medya</option>
-                      <option value="Walk-in">Walk-in</option>
-                      <option value="Diğer">Diğer</option>
-                    </select>
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="paymentStatus">Ödeme Durumu</Label>
+                    <Label htmlFor="paymentStatus" className="text-sm">Ödeme Durumu</Label>
                     <select
                       id="paymentStatus"
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="flex h-9 sm:h-10 w-full rounded-md border border-input bg-background px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                       value={filterPaymentStatus || ""}
                       onChange={(e) => setFilterPaymentStatus(e.target.value || null)}
                     >
                       <option value="">Tümü</option>
-                      <option value="Ödendi">Ödendi</option>
-                      <option value="Kısmi">Kısmi</option>
-                      <option value="Bekliyor">Bekliyor</option>
+                      <option value="paid">Ödendi</option>
+                      <option value="partial">Kısmi Ödeme</option>
+                      <option value="unpaid">Ödenmedi</option>
                     </select>
                   </div>
                 </div>
@@ -191,15 +218,16 @@ export default function ReservationsPage() {
                   </div>
                   
                   <div className="flex items-end">
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       onClick={() => {
                         setSearchTerm("");
-                        setFilterChannel(null);
+                        // setFilterChannel(null); // Kaldırıldı
                         setFilterPaymentStatus(null);
                         setDateRangeStart("");
                         setDateRangeEnd("");
                       }}
+                      className="h-9 sm:h-10 text-xs sm:text-sm"
                     >
                       Filtreleri Temizle
                     </Button>
@@ -207,9 +235,9 @@ export default function ReservationsPage() {
                 </div>
                 
                 <ReservationList 
-                  reservations={filteredReservations} 
+                  reservations={filteredReservations} // Enriched reservations
                   onDelete={handleDeleteReservation}
-                  onEdit={handleEditReservation}
+                  onEdit={handleEditReservation} // This sets selectedReservation and switches tab
                 />
               </div>
             </CardContent>
@@ -220,19 +248,24 @@ export default function ReservationsPage() {
           <Card>
             <CardHeader>
               <CardTitle>
-                {selectedReservation ? "Rezervasyon Düzenle" : "Yeni Rezervasyon"}
+                {selectedReservation ? "Rezervasyonu Düzenle" : "Yeni Rezervasyon Oluştur"}
               </CardTitle>
               <CardDescription>
                 {selectedReservation 
-                  ? "Mevcut rezervasyonu güncelleyin." 
-                  : "Yeni bir rezervasyon oluşturun."}
+                  ? `"${selectedReservation.id}" ID'li rezervasyonu güncelleyin.`
+                  : "Yeni bir rezervasyon için aşağıdaki formu doldurun."}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <ReservationForm 
-                reservation={selectedReservation} 
+                reservation={selectedReservation} // Ham selectedReservation (Reservation | null)
                 onSave={handleReservationSaved} 
-                onCancel={() => setSelectedReservation(null)}
+                onCancel={() => {
+                  setSelectedReservation(null);
+                  // İsteğe bağlı olarak listeleme sekmesine geri dönülebilir:
+                  const listTabTrigger = document.querySelector('[data-radix-collection-item][value="list"]') as HTMLButtonElement | null;
+                  if (listTabTrigger) listTabTrigger.click();
+                }}
               />
             </CardContent>
           </Card>

@@ -41,44 +41,61 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setIsLoading(true);
       if (firebaseUser) {
-        // Kullanıcı giriş yapmışsa (firebaseUser objesi mevcutsa)
         try {
-          // Firestore'dan kullanıcının ek bilgilerini (rol, displayName vb.) al.
-          // Kullanıcı ID'si (firebaseUser.uid) ile 'users' koleksiyonundan doküman okunur.
+          // Get ID token result to access custom claims
+          const idTokenResult = await firebaseUser.getIdTokenResult();
+          const userClaims = idTokenResult.claims;
+
+          // Determine role from custom claims first
+          let roleFromClaims: UserRole | undefined = undefined;
+          if (userClaims.role && Object.values(UserRole).includes(userClaims.role as UserRole)) {
+            roleFromClaims = userClaims.role as UserRole;
+          } else if (userClaims.admin === true) { // Example for a boolean admin claim
+             roleFromClaims = UserRole.ADMIN;
+          }
+          // Add more conditions if other claim structures are used (e.g. other boolean flags for roles)
+
+          // Fetch additional user data from Firestore (optional, if needed)
           const userDocRef = doc(firestore, 'users', firebaseUser.uid);
           const userDocSnap = await getDoc(userDocRef);
-          
+          let firestoreData: any = {};
+          let firestoreRole: UserRole | undefined = undefined;
+
           if (userDocSnap.exists()) {
-            // Firestore'da kullanıcı dokümanı bulundu.
-            const userData = userDocSnap.data();
-            const appUser: AuthUser = {
-              id: firebaseUser.uid,
-              username: userData.username || '',
-              email: firebaseUser.email || '',
-              role: userData.role || UserRole.USER,
-              displayName: userData.displayName || firebaseUser.displayName || '',
-              createdAt: userData.createdAt ? new Date(userData.createdAt) : new Date(),
-              lastLogin: new Date()
-            };
-            
-            setUser(appUser);
+            firestoreData = userDocSnap.data();
+            if (firestoreData.role && Object.values(UserRole).includes(firestoreData.role as UserRole)) {
+                firestoreRole = firestoreData.role as UserRole;
+            }
           } else {
-            // Kullanıcı Firestore'da yoksa çıkış yap
-            // Bu durum, bir kullanıcı Firebase Auth'da var ama Firestore'da ilgili dokümanı yoksa oluşur.
-            // Örneğin, kullanıcı oluşturulduktan sonra Firestore'a yazma işlemi başarısız olduysa.
-            console.warn(`Kullanıcı ${firebaseUser.uid} Firestore'da bulunamadı. Çıkış yapılıyor.`);
-            await signOut(auth); // Firebase Auth oturumunu sonlandır
-            setUser(null); // Lokal kullanıcı state'ini temizle
+            // If user is not in Firestore, it might be an issue depending on app logic.
+            // For now, we'll allow login if custom claims provide a role,
+            // or default to USER. A warning can be logged.
+            console.warn(`User ${firebaseUser.uid} not found in Firestore. Relying on custom claims or default role.`);
           }
+
+          // Role hierarchy: Custom Claim > Firestore Role > Default (UserRole.USER)
+          const finalRole = roleFromClaims || firestoreRole || UserRole.USER;
+
+          const appUser: AuthUser = {
+            id: firebaseUser.uid,
+            username: firestoreData.username || firebaseUser.email?.split('@')[0] || '',
+            email: firebaseUser.email || '',
+            role: finalRole,
+            displayName: firestoreData.displayName || firebaseUser.displayName || firebaseUser.email?.split('@')[0] || '',
+            createdAt: firestoreData.createdAt ? new Date(firestoreData.createdAt.seconds ? firestoreData.createdAt.toDate() : firestoreData.createdAt) : new Date(),
+            lastLogin: new Date(), // This could also be updated in Firestore if needed
+            // customClaims: userClaims, // Optionally store all claims if needed elsewhere
+          };
+
+          setUser(appUser);
+
         } catch (error) {
-          console.error("Auth context: Kullanıcı bilgileri Firestore'dan yüklenirken hata:", error);
-          toast.error("Kullanıcı bilgileri yüklenirken bir hata oluştu. Lütfen tekrar deneyin.");
-          // Hata durumunda kullanıcı oturumunu sonlandırmak güvenli bir yaklaşım olabilir.
+          console.error("Auth context: Error processing user state:", error);
+          toast.error("Kullanıcı oturumu doğrulanırken bir hata oluştu.");
           await signOut(auth);
           setUser(null);
         }
       } else {
-        // Kullanıcı giriş yapmamışsa (firebaseUser objesi null ise)
         setUser(null);
       }
       setIsLoading(false);
@@ -175,16 +192,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+import { ROLE_PERMISSIONS } from "@/types/auth"; // Import at the top
+
+// ... (rest of the AuthProvider component)
+
   // hasPermission: Kullanıcının belirtilen izin koduna sahip olup olmadığını kontrol eder.
   // İzinler, kullanıcının rolüne göre `types/auth.ts` dosyasındaki `ROLE_PERMISSIONS` objesinden alınır.
   const hasPermission = (permissionCode: string): boolean => {
     if (!user || !user.role) return false; // Kullanıcı yoksa veya rolü tanımsızsa izin yoktur.
     
-    // Dinamik require kullanımı yerine, dosyanın başında import edilmesi daha standart bir yaklaşımdır.
-    // const { ROLE_PERMISSIONS } = require("@/types/auth");
-    // Öneri: import { ROLE_PERMISSIONS } from "@/types/auth"; (dosyanın en başına)
-    // Ancak mevcut haliyle de çalışır.
-    const { ROLE_PERMISSIONS } = require("@/types/auth");
     const userPermissions = ROLE_PERMISSIONS[user.role] || [];
     return userPermissions.includes(permissionCode);
   };
