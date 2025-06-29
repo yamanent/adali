@@ -1,8 +1,11 @@
-// Firebase yapılandırma dosyası
-import { initializeApp, getApps } from 'firebase/app';
-import { getAuth, connectAuthEmulator } from 'firebase/auth';
-import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
-import { getStorage, connectStorageEmulator } from 'firebase/storage';
+// Firebase Yapılandırma Dosyası
+// Bu dosya, Firebase projesi ile bağlantı kurmak için gerekli yapılandırma bilgilerini içerir
+// ve Firebase servislerini (Authentication, Firestore, Storage, Analytics) başlatır.
+
+import { initializeApp, getApps, getApp } from 'firebase/app'; // getApp eklendi
+import { getAuth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 import { getAnalytics, isSupported } from 'firebase/analytics';
 
 // Firebase yapılandırma bilgileri
@@ -17,26 +20,26 @@ const firebaseConfig = {
 };
 
 // Firebase uygulamasını başlat
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
+// Birden fazla uygulama örneği oluşturulmasını engellemek için getApps() kontrolü yapılır.
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp(); // getApps()[0] yerine getApp() kullanıldı.
 
-// Firebase servislerini başlat
+// Firebase servislerini dışa aktarılabilir şekilde başlat
+// Bu servisler, uygulamanın diğer bölümlerinde Firebase özelliklerine erişmek için kullanılır.
 const auth = getAuth(app);
 const firestore = getFirestore(app);
 const storage = getStorage(app);
 
-// Analytics sadece tarayıcı ortamında çalışır
+// Firebase Analytics'i sadece tarayıcı ortamında ve destekleniyorsa başlat
 let analytics = null;
 if (typeof window !== 'undefined') {
-  // Analytics'i başlatmayı dene
-  isSupported().then(yes => yes ? getAnalytics(app) : null);
-}
-
-// Geliştirme ortamında emülatörleri kullan
-if (process.env.NODE_ENV === 'development') {
-  // Yerel emülatörleri kullanmak için aşağıdaki satırları açabilirsiniz
-  // connectAuthEmulator(auth, 'http://localhost:9099');
-  // connectFirestoreEmulator(firestore, 'localhost', 8080);
-  // connectStorageEmulator(storage, 'localhost', 9199);
+  isSupported().then(isAnalyticsSupported => {
+    if (isAnalyticsSupported) {
+      analytics = getAnalytics(app);
+      console.log("Firebase Analytics başlatıldı.");
+    } else {
+      console.log("Firebase Analytics bu tarayıcıda desteklenmiyor.");
+    }
+  });
 }
 
 export { app, auth, firestore, storage, analytics };

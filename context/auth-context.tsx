@@ -1,5 +1,11 @@
 "use client";
 
+// AuthContext.tsx
+// Bu dosya, Firebase Authentication ve Firestore kullanarak kullanıcı kimlik doğrulama
+// ve oturum yönetimini sağlar. `AuthProvider` bileşeni, uygulama genelinde
+// kullanıcı bilgilerine ve kimlik doğrulama fonksiyonlarına erişim sunar.
+// `useAuth` hook'u, bu context'e kolay erişim için kullanılır.
+
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { User as AuthUser, UserRole } from "@/types/auth";
 import { toast } from "sonner";
@@ -26,21 +32,25 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<AuthUser | null>(null); // Mevcut giriş yapmış kullanıcı veya null
+  const [isLoading, setIsLoading] = useState(true); // Kimlik doğrulama durumu yükleniyor mu?
 
   useEffect(() => {
-    // Firebase Auth durumunu dinle
+    // onAuthStateChanged, Firebase Authentication durumundaki değişiklikleri dinler.
+    // Kullanıcı giriş yaptığında, çıkış yaptığında veya token yenilendiğinde tetiklenir.
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setIsLoading(true);
       if (firebaseUser) {
+        // Kullanıcı giriş yapmışsa (firebaseUser objesi mevcutsa)
         try {
-          // Firestore'dan kullanıcı bilgilerini al
-          const userDoc = await getDoc(doc(firestore, 'users', firebaseUser.uid));
+          // Firestore'dan kullanıcının ek bilgilerini (rol, displayName vb.) al.
+          // Kullanıcı ID'si (firebaseUser.uid) ile 'users' koleksiyonundan doküman okunur.
+          const userDocRef = doc(firestore, 'users', firebaseUser.uid);
+          const userDocSnap = await getDoc(userDocRef);
           
-          if (userDoc.exists()) {
-            // Firestore'dan gelen kullanıcı verilerini kullan
-            const userData = userDoc.data();
+          if (userDocSnap.exists()) {
+            // Firestore'da kullanıcı dokümanı bulundu.
+            const userData = userDocSnap.data();
             const appUser: AuthUser = {
               id: firebaseUser.uid,
               username: userData.username || '',
@@ -52,39 +62,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             };
             
             setUser(appUser);
-            localStorage.setItem("adminLoggedIn", "true"); // Geriye dönük uyumluluk için
           } else {
             // Kullanıcı Firestore'da yoksa çıkış yap
-            await signOut(auth);
-            setUser(null);
-            localStorage.removeItem("adminLoggedIn");
+            // Bu durum, bir kullanıcı Firebase Auth'da var ama Firestore'da ilgili dokümanı yoksa oluşur.
+            // Örneğin, kullanıcı oluşturulduktan sonra Firestore'a yazma işlemi başarısız olduysa.
+            console.warn(`Kullanıcı ${firebaseUser.uid} Firestore'da bulunamadı. Çıkış yapılıyor.`);
+            await signOut(auth); // Firebase Auth oturumunu sonlandır
+            setUser(null); // Lokal kullanıcı state'ini temizle
           }
         } catch (error) {
-          console.error("Kullanıcı bilgileri yüklenirken hata:", error);
-          toast.error("Kullanıcı bilgileri yüklenirken bir hata oluştu");
+          console.error("Auth context: Kullanıcı bilgileri Firestore'dan yüklenirken hata:", error);
+          toast.error("Kullanıcı bilgileri yüklenirken bir hata oluştu. Lütfen tekrar deneyin.");
+          // Hata durumunda kullanıcı oturumunu sonlandırmak güvenli bir yaklaşım olabilir.
+          await signOut(auth);
+          setUser(null);
         }
       } else {
+        // Kullanıcı giriş yapmamışsa (firebaseUser objesi null ise)
         setUser(null);
-        localStorage.removeItem("adminLoggedIn");
       }
       setIsLoading(false);
     });
 
+    // useEffect cleanup fonksiyonu: Component unmount olduğunda onAuthStateChanged listener'ını kaldırır.
+    // Bu, memory leak'leri ve gereksiz listener'ları önler.
     return () => unsubscribe();
   }, []);
 
-  // Giriş fonksiyonu - Firebase Authentication kullanarak
+  // login: Kullanıcıyı e-posta ve şifre ile Firebase Authentication kullanarak giriş yaptırır.
+  // Başarılı giriş sonrası onAuthStateChanged tetiklenir ve kullanıcı bilgileri Firestore'dan yüklenir.
   const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
     try {
-      // Firebase ile giriş yap
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const firebaseUser = userCredential.user;
-      
-      toast.success("Giriş başarılı");
+      await signInWithEmailAndPassword(auth, email, password);
+      // Giriş başarılı olduğunda onAuthStateChanged listener'ı yukarıda kullanıcı state'ini güncelleyecektir.
+      toast.success("Giriş başarılı!");
       return true;
     } catch (error: any) {
-      console.error("Giriş yapılırken hata:", error);
+      console.error("Auth context: Giriş yapılırken hata:", error);
       
       // Firebase hata kodlarına göre özelleştirilmiş mesajlar
       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
@@ -101,27 +116,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
   
-  // Kayıt fonksiyonu - Firebase Authentication kullanarak
+  // register: Yeni bir kullanıcıyı Firebase Authentication ile kaydeder ve
+  // ek kullanıcı bilgilerini (displayName, role vb.) Firestore'daki 'users' koleksiyonuna yazar.
   const register = async (email: string, password: string, displayName: string, role: UserRole = UserRole.USER): Promise<boolean> => {
     setIsLoading(true);
     try {
-      // Firebase ile yeni kullanıcı oluştur
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const firebaseUser = userCredential.user;
       
-      // Kullanıcı bilgilerini Firestore'a kaydet
-      const username = email.split('@')[0]; // E-postadan basit bir kullanıcı adı oluştur
+      const username = email.split('@')[0]; // E-postanın @ işaretinden önceki kısmını kullanıcı adı olarak alır.
       
+      // Yeni kullanıcı için Firestore'da doküman oluştur.
+      // Not: `createdAt` ve `lastLogin` alanları burada `toISOString()` ile oluşturuluyor.
+      // `lib/firebase-service.ts` içindeki `processDataForFirestore` fonksiyonu,
+      // Firestore'a yazarken `serverTimestamp()` kullanır. Tutarlılık için bu fonksiyonun
+      // oradaki gibi `serverTimestamp()` kullanması veya Firestore'a yazılacak verinin
+      // `processDataForFirestore` ile işlenmesi daha iyi bir pratiktir.
+      // Şimdilik mevcut haliyle bırakılmıştır.
       await setDoc(doc(firestore, 'users', firebaseUser.uid), {
         username,
-        email,
+        email: firebaseUser.email, // Auth objesinden gelen doğrulanmış e-postayı kullanmak daha güvenlidir.
         displayName,
         role,
         createdAt: new Date().toISOString(),
         lastLogin: new Date().toISOString()
       });
       
-      toast.success("Kayıt başarılı");
+      toast.success("Kayıt başarılı! Giriş yapabilirsiniz.");
       return true;
     } catch (error: any) {
       console.error("Kayıt olunurken hata:", error);
@@ -141,29 +162,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Çıkış fonksiyonu - Firebase Authentication kullanarak
+  // logout: Kullanıcının Firebase Authentication oturumunu sonlandırır.
+  // Başarılı çıkış sonrası onAuthStateChanged tetiklenir ve kullanıcı state'i null olur.
   const logout = async () => {
     try {
       await signOut(auth);
-      localStorage.removeItem("adminLoggedIn"); // Geriye dönük uyumluluk için
-      setUser(null);
+      // setUser(null) çağrısı burada gereksizdir, çünkü onAuthStateChanged bunu zaten yapacaktır.
       toast.success("Başarıyla çıkış yapıldı");
     } catch (error) {
-      console.error("Çıkış yapılırken hata:", error);
+      console.error("Auth context: Çıkış yapılırken hata:", error);
       toast.error("Çıkış yapılırken bir hata oluştu");
     }
   };
 
-  // İzin kontrolü
+  // hasPermission: Kullanıcının belirtilen izin koduna sahip olup olmadığını kontrol eder.
+  // İzinler, kullanıcının rolüne göre `types/auth.ts` dosyasındaki `ROLE_PERMISSIONS` objesinden alınır.
   const hasPermission = (permissionCode: string): boolean => {
-    if (!user) return false;
+    if (!user || !user.role) return false; // Kullanıcı yoksa veya rolü tanımsızsa izin yoktur.
     
-    // Kullanıcı rolüne göre izinleri kontrol et
+    // Dinamik require kullanımı yerine, dosyanın başında import edilmesi daha standart bir yaklaşımdır.
+    // const { ROLE_PERMISSIONS } = require("@/types/auth");
+    // Öneri: import { ROLE_PERMISSIONS } from "@/types/auth"; (dosyanın en başına)
+    // Ancak mevcut haliyle de çalışır.
     const { ROLE_PERMISSIONS } = require("@/types/auth");
     const userPermissions = ROLE_PERMISSIONS[user.role] || [];
     return userPermissions.includes(permissionCode);
   };
 
+  // AuthContext provider'ının sağladığı değerler.
   const value = {
     user,
     isLoading,
@@ -177,10 +203,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
+// useAuth: AuthContext'e kolay erişim sağlayan custom hook.
+// Bu hook, AuthProvider ile sarmalanmış component'ler içinden çağrılmalıdır.
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    // Context'in AuthProvider dışında kullanılmaya çalışıldığını belirtir.
+    throw new Error("useAuth hook must be used within an AuthProvider");
   }
   return context;
 }
