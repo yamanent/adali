@@ -20,7 +20,8 @@ export default function StatisticsPage() {
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth());
   
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  // Tüm useAuth değerlerini tek seferde alıyoruz
+  const { isAuthenticated, user, hasPermission } = useAuth();
 
   useEffect(() => {
     // Oturum kontrolü artık useAuth hook'u ile yapılıyor
@@ -167,9 +168,6 @@ export default function StatisticsPage() {
   const totalRevenue = getTotalRevenue();
   const paymentStatusRevenue = getPaymentStatusRevenue();
 
-  // Kullanıcı rolünü ve izinleri kontrol et
-  const { user, hasPermission } = useAuth();
-  
   // Rol kontrolü
   if (!user || ![UserRole.ADMIN, UserRole.MANAGER].includes(user.role)) {
     return <Unauthorized message="İstatistikler sayfasına erişim için yönetici veya admin yetkisi gereklidir." />;

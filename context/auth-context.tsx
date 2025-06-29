@@ -1,23 +1,13 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { User as AuthUser, UserRole } from "@/types/auth";
+import { User, UserRole } from "@/types/auth";
 import { toast } from "sonner";
-import { 
-  User as FirebaseUser, 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword, 
-  signOut, 
-  onAuthStateChanged 
-} from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
-import { auth, firestore } from "@/lib/firebase";
 
 interface AuthContextType {
-  user: AuthUser | null;
+  user: User | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
-  register: (email: string, password: string, displayName: string, role?: UserRole) => Promise<boolean>;
+  login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
   isAuthenticated: boolean;
   hasPermission: (permissionCode: string) => boolean;
@@ -26,132 +16,103 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Firebase Auth durumunu dinle
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    // Sayfa yüklendiğinde localStorage'dan kullanıcı bilgilerini al
+    const loadUser = () => {
       setIsLoading(true);
-      if (firebaseUser) {
-        try {
-          // Firestore'dan kullanıcı bilgilerini al
-          const userDoc = await getDoc(doc(firestore, 'users', firebaseUser.uid));
-          
-          if (userDoc.exists()) {
-            // Firestore'dan gelen kullanıcı verilerini kullan
-            const userData = userDoc.data();
-            const appUser: AuthUser = {
-              id: firebaseUser.uid,
-              username: userData.username || '',
-              email: firebaseUser.email || '',
-              role: userData.role || UserRole.USER,
-              displayName: userData.displayName || firebaseUser.displayName || '',
-              createdAt: userData.createdAt ? new Date(userData.createdAt) : new Date(),
-              lastLogin: new Date()
-            };
-            
-            setUser(appUser);
-            localStorage.setItem("adminLoggedIn", "true"); // Geriye dönük uyumluluk için
-          } else {
-            // Kullanıcı Firestore'da yoksa çıkış yap
-            await signOut(auth);
-            setUser(null);
-            localStorage.removeItem("adminLoggedIn");
-          }
-        } catch (error) {
-          console.error("Kullanıcı bilgileri yüklenirken hata:", error);
-          toast.error("Kullanıcı bilgileri yüklenirken bir hata oluştu");
+      try {
+        const storedUser = localStorage.getItem("user");
+        if (storedUser) {
+          const parsedUser = JSON.parse(storedUser);
+          setUser(parsedUser);
         }
-      } else {
-        setUser(null);
-        localStorage.removeItem("adminLoggedIn");
+      } catch (error) {
+        console.error("Kullanıcı bilgileri yüklenirken hata:", error);
+        localStorage.removeItem("user");
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
-    });
+    };
 
-    return () => unsubscribe();
+    loadUser();
   }, []);
 
-  // Giriş fonksiyonu - Firebase Authentication kullanarak
-  const login = async (email: string, password: string): Promise<boolean> => {
+  // Giriş fonksiyonu
+  const login = async (username: string, password: string): Promise<boolean> => {
     setIsLoading(true);
     try {
-      // Firebase ile giriş yap
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const firebaseUser = userCredential.user;
-      
-      toast.success("Giriş başarılı");
-      return true;
-    } catch (error: any) {
+      // Normalde burada API çağrısı yapılır
+      // Şimdilik örnek kullanıcılar ile devam edelim
+      const mockUsers = {
+        "admin": {
+          id: "1",
+          username: "admin",
+          email: "admin@adali.com",
+          role: UserRole.ADMIN,
+          displayName: "Admin Kullanıcı",
+          createdAt: new Date(),
+          lastLogin: new Date()
+        },
+        "manager": {
+          id: "2",
+          username: "manager",
+          email: "manager@adali.com",
+          role: UserRole.MANAGER,
+          displayName: "Yönetici Kullanıcı",
+          createdAt: new Date(),
+          lastLogin: new Date()
+        },
+        "editor": {
+          id: "3",
+          username: "editor",
+          email: "editor@adali.com",
+          role: UserRole.EDITOR,
+          displayName: "Editör Kullanıcı",
+          createdAt: new Date(),
+          lastLogin: new Date()
+        },
+        "reader": {
+          id: "4",
+          username: "reader",
+          email: "reader@adali.com",
+          role: UserRole.READER,
+          displayName: "Okuyucu Kullanıcı",
+          createdAt: new Date(),
+          lastLogin: new Date()
+        }
+      };
+
+      // Basit doğrulama - gerçek uygulamada API'den doğrulama yapılır
+      if (mockUsers[username as keyof typeof mockUsers] && password === "123456") {
+        const user = mockUsers[username as keyof typeof mockUsers];
+        // Kullanıcı bilgilerini localStorage'a kaydet
+        localStorage.setItem("user", JSON.stringify(user));
+        localStorage.setItem("adminLoggedIn", "true"); // Geriye dönük uyumluluk için
+        setUser(user);
+        toast.success(`Hoş geldiniz, ${user.displayName}`);
+        return true;
+      } else {
+        toast.error("Kullanıcı adı veya şifre hatalı");
+        return false;
+      }
+    } catch (error) {
       console.error("Giriş yapılırken hata:", error);
-      
-      // Firebase hata kodlarına göre özelleştirilmiş mesajlar
-      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-        toast.error("E-posta veya şifre hatalı");
-      } else if (error.code === 'auth/too-many-requests') {
-        toast.error("Çok fazla başarısız giriş denemesi. Lütfen daha sonra tekrar deneyin.");
-      } else {
-        toast.error("Giriş yapılırken bir hata oluştu");
-      }
-      
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-  // Kayıt fonksiyonu - Firebase Authentication kullanarak
-  const register = async (email: string, password: string, displayName: string, role: UserRole = UserRole.USER): Promise<boolean> => {
-    setIsLoading(true);
-    try {
-      // Firebase ile yeni kullanıcı oluştur
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const firebaseUser = userCredential.user;
-      
-      // Kullanıcı bilgilerini Firestore'a kaydet
-      const username = email.split('@')[0]; // E-postadan basit bir kullanıcı adı oluştur
-      
-      await setDoc(doc(firestore, 'users', firebaseUser.uid), {
-        username,
-        email,
-        displayName,
-        role,
-        createdAt: new Date().toISOString(),
-        lastLogin: new Date().toISOString()
-      });
-      
-      toast.success("Kayıt başarılı");
-      return true;
-    } catch (error: any) {
-      console.error("Kayıt olunurken hata:", error);
-      
-      // Firebase hata kodlarına göre özelleştirilmiş mesajlar
-      if (error.code === 'auth/email-already-in-use') {
-        toast.error("Bu e-posta adresi zaten kullanılıyor");
-      } else if (error.code === 'auth/weak-password') {
-        toast.error("Şifre çok zayıf. En az 6 karakter kullanın.");
-      } else {
-        toast.error("Kayıt olunurken bir hata oluştu");
-      }
-      
+      toast.error("Giriş yapılırken bir hata oluştu");
       return false;
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Çıkış fonksiyonu - Firebase Authentication kullanarak
-  const logout = async () => {
-    try {
-      await signOut(auth);
-      localStorage.removeItem("adminLoggedIn"); // Geriye dönük uyumluluk için
-      setUser(null);
-      toast.success("Başarıyla çıkış yapıldı");
-    } catch (error) {
-      console.error("Çıkış yapılırken hata:", error);
-      toast.error("Çıkış yapılırken bir hata oluştu");
-    }
+  // Çıkış fonksiyonu
+  const logout = () => {
+    localStorage.removeItem("user");
+    localStorage.removeItem("adminLoggedIn"); // Geriye dönük uyumluluk için
+    setUser(null);
+    toast.success("Başarıyla çıkış yapıldı");
   };
 
   // İzin kontrolü
@@ -168,7 +129,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     isLoading,
     login,
-    register,
     logout,
     isAuthenticated: !!user,
     hasPermission
