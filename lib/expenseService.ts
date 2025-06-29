@@ -1,4 +1,5 @@
 import { Expense } from './models';
+import { demoExpenses } from './demoData';
 
 // Örnek gider verileri
 const sampleExpenses: Expense[] = [
@@ -75,9 +76,9 @@ export const getAllExpenses = (): Expense[] => {
   
   const storedExpenses = localStorage.getItem(EXPENSES_STORAGE_KEY);
   if (!storedExpenses) {
-    // İlk kullanımda örnek verileri kaydet
-    localStorage.setItem(EXPENSES_STORAGE_KEY, JSON.stringify(sampleExpenses));
-    return sampleExpenses;
+    // İlk kullanımda demo verileri kaydet
+    localStorage.setItem(EXPENSES_STORAGE_KEY, JSON.stringify(demoExpenses));
+    return demoExpenses;
   }
   
   return JSON.parse(storedExpenses);

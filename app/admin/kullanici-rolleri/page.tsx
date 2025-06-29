@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/context/auth-context";
 import { UserRole } from "@/types/auth";
 import Unauthorized from "@/components/auth/unauthorized";
+import { getAllUsers, addUser, updateUser, deleteUser } from "@/lib/userService";
 
 // Kullanıcı tipi tanımı
 type User = {
@@ -45,30 +46,7 @@ const availablePermissions: Permission[] = [
   { id: "edit:customers", name: "Müşteri Düzenleme", description: "Müşterileri düzenleme izni" },
 ];
 
-// Örnek kullanıcılar (gerçek uygulamada API'den gelecek)
-const mockUsers: User[] = [
-  {
-    id: "1",
-    name: "Admin Kullanıcı",
-    email: "admin@example.com",
-    role: UserRole.ADMIN,
-    permissions: ["view:dashboard", "view:statistics", "view:reservations"]
-  },
-  {
-    id: "2",
-    name: "Yönetici Kullanıcı",
-    email: "manager@example.com",
-    role: UserRole.MANAGER,
-    permissions: ["view:dashboard", "view:reservations", "create:reservation", "edit:reservation"]
-  },
-  {
-    id: "3",
-    name: "Personel Kullanıcı",
-    email: "staff@example.com",
-    role: UserRole.STAFF,
-    permissions: ["view:dashboard", "view:reservations"]
-  }
-];
+// Kullanıcılar artık userService üzerinden yönetiliyor
 
 export default function UserRolesPage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -84,8 +62,9 @@ export default function UserRolesPage() {
   const { user } = useAuth();
 
   useEffect(() => {
-    // Gerçek uygulamada API'den kullanıcıları çekecek
-    setUsers(mockUsers);
+    // Kullanıcıları servis üzerinden yükle
+    const loadedUsers = getAllUsers();
+    setUsers(loadedUsers);
     setIsLoading(false);
   }, []);
 
