@@ -60,18 +60,37 @@ export default function CalendarView({
 
   // Tarih aralığında rezervasyon var mı kontrol et
   const getReservationsForDateRange = (roomNumber: string, date: Date) => {
-    const dateStr = date.toISOString().split("T")[0];
+    try {
+      const dateStr = date.toISOString().split("T")[0];
 
-    return reservations.filter((res) => {
-      const checkInDate = new Date(res.checkInDate).toISOString().split("T")[0];
-      const checkOutDate = new Date(res.checkOutDate).toISOString().split("T")[0];
+      return reservations.filter((res) => {
+        try {
+          const checkIn = new Date(res.checkInDate);
+          const checkOut = new Date(res.checkOutDate);
+          
+          // Geçersiz tarih kontrolü
+          if (isNaN(checkIn.getTime()) || isNaN(checkOut.getTime())) {
+            console.warn("Geçersiz tarih değeri:", { checkInDate: res.checkInDate, checkOutDate: res.checkOutDate, reservation: res });
+            return false;
+          }
+          
+          const checkInDate = checkIn.toISOString().split("T")[0];
+          const checkOutDate = checkOut.toISOString().split("T")[0];
 
-      return (
-        res.roomNumber === roomNumber &&
-        dateStr >= checkInDate &&
-        dateStr < checkOutDate
-      );
-    });
+          return (
+            res.roomNumber === roomNumber &&
+            dateStr >= checkInDate &&
+            dateStr < checkOutDate
+          );
+        } catch (error) {
+          console.error("Rezervasyon tarih kontrolü sırasında hata:", error, { reservation: res });
+          return false;
+        }
+      });
+    } catch (error) {
+      console.error("Tarih işlemi sırasında hata:", error);
+      return [];
+    }
   };
 
   // Rezervasyon kanalına göre renk belirle
@@ -141,27 +160,43 @@ export default function CalendarView({
                     className={`border-r h-16 ${isToday(day) ? "bg-blue-50" : ""}`}
                   >
                     {dayReservations.map((reservation) => {
-                      // Rezervasyon başlangıç ve bitiş günlerini kontrol et
-                      const isCheckIn = new Date(reservation.checkInDate).toISOString().split("T")[0] === day.toISOString().split("T")[0];
-                      const isCheckOut = new Date(reservation.checkOutDate).toISOString().split("T")[0] === day.toISOString().split("T")[0];
-                      
-                      return (
-                        <div
-                          key={reservation.id}
-                          className={`${getReservationColor(reservation.reservationChannel)} text-white p-1 text-xs cursor-pointer h-full overflow-hidden`}
-                          onClick={() => {
-                            setSelectedReservation(reservation);
-                            setIsModalOpen(true);
-                          }}
-                          title={`${reservation.guestName} - ${reservation.phone}`}
-                        >
-                          <div className="font-medium truncate">
-                            {isCheckIn && "► "}{reservation.guestName}{isCheckOut && " ◄"}
+                      try {
+                        // Rezervasyon başlangıç ve bitiş günlerini kontrol et
+                        const checkIn = new Date(reservation.checkInDate);
+                        const checkOut = new Date(reservation.checkOutDate);
+                        
+                        // Geçersiz tarih kontrolü
+                        if (isNaN(checkIn.getTime()) || isNaN(checkOut.getTime())) {
+                          return null; // Geçersiz tarih ise gösterme
+                        }
+                        
+                        const isCheckIn = checkIn.toISOString().split("T")[0] === day.toISOString().split("T")[0];
+                        const isCheckOut = checkOut.toISOString().split("T")[0] === day.toISOString().split("T")[0];
+                        
+                        // Rezervasyon kaynağı için güvenli erişim
+                        const channel = (reservation as any).reservationChannel || "OTHER";
+                        
+                        return (
+                          <div
+                            key={reservation.id}
+                            className={`${getReservationColor(channel)} text-white p-1 text-xs cursor-pointer h-full overflow-hidden`}
+                            onClick={() => {
+                              setSelectedReservation(reservation);
+                              setIsModalOpen(true);
+                            }}
+                            title={`${reservation.guestName} - ${(reservation as any).phone || reservation.phoneNumber || 'Telefon yok'}`}
+                          >
+                            <div className="font-medium truncate">
+                              {isCheckIn && "► "}{reservation.guestName}{isCheckOut && " ◄"}
+                            </div>
+                            <div className="truncate">{(reservation as any).guestCount || '1'} kişi</div>
+                            <div className="truncate">{channel}</div>
                           </div>
-                          <div className="truncate">{reservation.guestCount} kişi</div>
-                          <div className="truncate">{reservation.reservationChannel}</div>
-                        </div>
-                      );
+                        );
+                      } catch (error) {
+                        console.error("Rezervasyon gösterimi sırasında hata:", error);
+                        return null;
+                      }
                     })}
                   </div>
                 );
@@ -188,7 +223,7 @@ export default function CalendarView({
                   <div>
                     <h4 className="font-medium mb-1">Misafir Bilgileri</h4>
                     <p><span className="font-medium">İsim:</span> {selectedReservation.guestName}</p>
-                    <p><span className="font-medium">Telefon:</span> {selectedReservation.phone || "Belirtilmemiş"}</p>
+                    <p><span className="font-medium">Telefon:</span> {selectedReservation.phoneNumber || "Belirtilmemiş"}</p>
                     <p><span className="font-medium">E-posta:</span> {selectedReservation.email || "Belirtilmemiş"}</p>
                     <p><span className="font-medium">Kişi Sayısı:</span> {selectedReservation.guestCount}</p>
                   </div>
@@ -196,7 +231,7 @@ export default function CalendarView({
                   <div>
                     <h4 className="font-medium mb-1">Rezervasyon Bilgileri</h4>
                     <p><span className="font-medium">Oda:</span> {selectedReservation.roomNumber} - {selectedReservation.roomType}</p>
-                    <p><span className="font-medium">Kanal:</span> {selectedReservation.reservationChannel}</p>
+                    <p><span className="font-medium">Kanal:</span> {selectedReservation.source}</p>
                     <p><span className="font-medium">Ödeme Durumu:</span> {selectedReservation.paymentStatus}</p>
                     <p><span className="font-medium">Toplam Ücret:</span> {selectedReservation.totalPrice} ₺</p>
                   </div>

@@ -111,19 +111,29 @@ export default function StatisticsPage() {
     
     // Her rezervasyon için, oda ve tarih kombinasyonlarını hesapla
     filteredReservations.forEach(res => {
-      const checkIn = new Date(res.checkInDate);
-      const checkOut = new Date(res.checkOutDate);
-      
-      // Rezervasyonun bu aydaki günlerini hesapla
-      for (let d = new Date(Math.max(checkIn.getTime(), new Date(selectedYear, selectedMonth, 1).getTime()));
-           d < new Date(Math.min(checkOut.getTime(), new Date(selectedYear, selectedMonth + 1, 0).getTime()));
-           d.setDate(d.getDate() + 1)) {
+      try {
+        const checkIn = new Date(res.checkInDate);
+        const checkOut = new Date(res.checkOutDate);
         
-        const dateStr = d.toISOString().split('T')[0];
-        if (!roomOccupancy[res.roomId]) {
-          roomOccupancy[res.roomId] = new Set();
+        // Geçersiz tarih kontrolü
+        if (isNaN(checkIn.getTime()) || isNaN(checkOut.getTime())) {
+          console.warn("Geçersiz tarih değeri:", { checkInDate: res.checkInDate, checkOutDate: res.checkOutDate });
+          return; // Bu rezervasyonu atla
         }
-        roomOccupancy[res.roomId].add(dateStr);
+        
+        // Rezervasyonun bu aydaki günlerini hesapla
+        for (let d = new Date(Math.max(checkIn.getTime(), new Date(selectedYear, selectedMonth, 1).getTime()));
+             d < new Date(Math.min(checkOut.getTime(), new Date(selectedYear, selectedMonth + 1, 0).getTime()));
+             d.setDate(d.getDate() + 1)) {
+          
+          const dateStr = d.toISOString().split('T')[0];
+          if (!roomOccupancy[res.roomId]) {
+            roomOccupancy[res.roomId] = new Set();
+          }
+          roomOccupancy[res.roomId].add(dateStr);
+        }
+      } catch (error) {
+        console.error("Tarih hesaplaması sırasında hata:", error, { reservation: res });
       }
     });
     

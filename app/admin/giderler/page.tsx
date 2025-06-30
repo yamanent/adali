@@ -129,12 +129,23 @@ export default function ExpensesPage() {
   };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('tr-TR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+    try {
+      const date = new Date(dateString);
+      
+      // Geçersiz tarih kontrolü
+      if (isNaN(date.getTime())) {
+        return dateString; // Geçersiz tarih ise orijinal string'i döndür
+      }
+      
+      return date.toLocaleDateString('tr-TR', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    } catch (error) {
+      console.error("Tarih formatlanırken hata:", error);
+      return dateString; // Hata durumunda orijinal string'i döndür
+    }
   };
 
   if (isLoading) {
