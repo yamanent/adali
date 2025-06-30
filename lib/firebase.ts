@@ -185,11 +185,21 @@ export const getDocs = async (queryRef: any) => {
     };
   });
   
-  const result = {
+  // Sonuç nesnesini oluştur
+  const result: any = {
     empty: docArray.length === 0,
     size: docArray.length,
     docs: docArray,
-    forEach: (callback: (doc: any) => void) => docArray.forEach(callback)
+    forEach: (callback: (doc: any) => void) => docArray.forEach(callback),
+    // Sonuç nesnesinin kendisine de get metodu ekleyelim
+    get: (field: string) => {
+      if (field === 'docs') return docArray;
+      if (field === 'empty') return docArray.length === 0;
+      if (field === 'size') return docArray.length;
+      return undefined;
+    },
+    // Dizi benzeri erişim için
+    map: (callback: (doc: any) => any) => docArray.map(callback)
   };
   
   // Dökümanların kendilerine de get metodu ekleyelim
@@ -201,6 +211,16 @@ export const getDocs = async (queryRef: any) => {
       };
     }
   });
+  
+  // Dizi gibi davranması için
+  Object.defineProperty(result, 'length', {
+    get: () => docArray.length
+  });
+  
+  // Dizi metotlarını ekleyelim
+  for (let i = 0; i < docArray.length; i++) {
+    result[i] = docArray[i];
+  }
   
   return result;
 };
