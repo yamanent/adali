@@ -122,7 +122,12 @@ export const addDoc = async (collectionRef: string, data: any) => {
   if (!mockDatabase[path]) mockDatabase[path] = {};
   mockDatabase[path][id] = { ...data, id };
   saveToLocalStorage();
-  return { id, path };
+  return { 
+    id, 
+    path,
+    get: (field: string) => data ? data[field] : undefined,
+    add: (data: any) => addDoc(path, data)
+  };
 };
 export const setDoc = async (docRef: string, data: any) => {
   const parts = docRef.split('/');
@@ -158,23 +163,30 @@ export const getDoc = async (docRef: string) => {
   return {
     exists: () => !!data,
     data: () => data || null,
-    id
+    id,
+    get: (field: string) => data ? data[field] : undefined
   };
 };
 export const getDocs = async (queryRef: any) => {
   const path = typeof queryRef === 'string' ? queryRef : queryRef.path;
   const docs = mockDatabase[path] || {};
+  
+  // Sonuçları oluştur
+  const docArray = Object.entries(docs).map(([id, data]) => ({
+    id,
+    data: () => data,
+    exists: () => true,
+    get: (field: string) => data ? data[field] : undefined
+  }));
+  
   return {
-    empty: Object.keys(docs).length === 0,
-    size: Object.keys(docs).length,
-    docs: Object.entries(docs).map(([id, data]) => ({
-      id,
-      data: () => data,
-      exists: () => true
-    }))
+    empty: docArray.length === 0,
+    size: docArray.length,
+    docs: docArray,
+    forEach: (callback: (doc: any) => void) => docArray.forEach(callback)
   };
 };
-export const query = (collectionRef: string) => ({ path: collectionRef });
+export const query = (collectionRef: string, ...queryConstraints: any[]) => ({ path: collectionRef, constraints: queryConstraints });
 export const where = () => ({});
 export const orderBy = () => ({});
 export const limit = () => ({});

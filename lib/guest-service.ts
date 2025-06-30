@@ -64,7 +64,7 @@ const mapDocumentToGuest = (docSnapshot: any): Guest => {
  */
 export const createGuest = async (guestData: Omit<Guest, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> => {
   try {
-    const docRef = await addDoc(collection(firestore, GUESTS_COLLECTION), {
+    const docRef = await addDoc(GUESTS_COLLECTION, {
       ...guestData,
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
@@ -83,8 +83,8 @@ export const createGuest = async (guestData: Omit<Guest, 'id' | 'createdAt' | 'u
  */
 export const getGuest = async (guestId: string): Promise<Guest | null> => {
   try {
-    const docRef = doc(firestore, GUESTS_COLLECTION, guestId);
-    const docSnap = await getDoc(docRef);
+    const docPath = `${GUESTS_COLLECTION}/${guestId}`;
+    const docSnap = await getDoc(docPath);
     if (docSnap.exists()) {
       return mapDocumentToGuest(docSnap);
     }
@@ -103,8 +103,8 @@ export const getGuest = async (guestId: string): Promise<Guest | null> => {
  */
 export const updateGuest = async (guestId: string, updatedData: Partial<Omit<Guest, 'id' | 'createdAt' | 'updatedAt'>>): Promise<void> => {
   try {
-    const guestRef = doc(firestore, GUESTS_COLLECTION, guestId);
-    await updateDoc(guestRef, {
+    const docPath = `${GUESTS_COLLECTION}/${guestId}`;
+    await updateDoc(docPath, {
       ...updatedData,
       updatedAt: Timestamp.now(),
     });
@@ -121,8 +121,8 @@ export const updateGuest = async (guestId: string, updatedData: Partial<Omit<Gue
  */
 export const deleteGuest = async (guestId: string): Promise<void> => {
   try {
-    const guestRef = doc(firestore, GUESTS_COLLECTION, guestId);
-    await deleteDoc(guestRef);
+    const docPath = `${GUESTS_COLLECTION}/${guestId}`;
+    await deleteDoc(docPath);
   } catch (error) {
     console.error('Error deleting guest:', error);
     // Firestore'da referans bütünlüğü kontrolü olmadığı için,
@@ -139,7 +139,7 @@ export const deleteGuest = async (guestId: string): Promise<void> => {
  */
 export const listGuests = async (): Promise<Guest[]> => {
   try {
-    const q = query(collection(firestore, GUESTS_COLLECTION));
+    const q = query(GUESTS_COLLECTION);
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(mapDocumentToGuest);
   } catch (error) {
