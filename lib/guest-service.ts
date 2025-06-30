@@ -20,11 +20,40 @@ const GUESTS_COLLECTION = 'guests';
 // Firestore'dan gelen veriyi Guest tipine dönüştürmek için yardımcı fonksiyon
 const mapDocumentToGuest = (docSnapshot: any): Guest => {
   const data = docSnapshot.data();
+  
+  // Tarih alanlarını güvenli bir şekilde dönüştür
+  const processTimestamp = (timestamp: any): string => {
+    if (!timestamp) return new Date().toISOString();
+    
+    // Timestamp nesnesiyse ve toDate fonksiyonu varsa
+    if (timestamp && typeof timestamp === 'object' && typeof timestamp.toDate === 'function') {
+      return timestamp.toDate().toISOString();
+    }
+    
+    // Timestamp nesnesiyse ama toDate fonksiyonu yoksa (localStorage'dan gelmiş olabilir)
+    if (timestamp && typeof timestamp === 'object' && timestamp.seconds !== undefined) {
+      const milliseconds = timestamp.seconds * 1000 + (timestamp.nanoseconds || 0) / 1000000;
+      return new Date(milliseconds).toISOString();
+    }
+    
+    // Zaten string ise
+    if (typeof timestamp === 'string') {
+      return timestamp;
+    }
+    
+    // Date nesnesi ise
+    if (timestamp instanceof Date) {
+      return timestamp.toISOString();
+    }
+    
+    return new Date().toISOString();
+  };
+  
   return {
     id: docSnapshot.id,
     ...data,
-    createdAt: (data.createdAt as Timestamp)?.toDate().toISOString(),
-    updatedAt: (data.updatedAt as Timestamp)?.toDate().toISOString(),
+    createdAt: processTimestamp(data.createdAt),
+    updatedAt: processTimestamp(data.updatedAt),
   } as Guest;
 };
 
