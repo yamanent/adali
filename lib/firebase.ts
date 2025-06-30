@@ -1,8 +1,9 @@
 // Mock Firebase Yapılandırma Dosyası
-// Firebase paketi yüklenene kadar mock servisler kullanılacak
+// Gerçek Firebase yerine localStorage tabanlı bir çözüm kullanıyoruz
 
 // Veri saklama için localStorage tabanlı veritabanı
-let mockDatabase: Record<string, Record<string, any>> = {};
+type MockDatabase = Record<string, Record<string, any>>;
+export let mockDatabase: MockDatabase = {};
 
 // Tarayıcı ortamında localStorage'dan verileri yükle
 if (typeof window !== 'undefined') {
@@ -17,15 +18,34 @@ if (typeof window !== 'undefined') {
 }
 
 // Veritabanı değişikliklerini localStorage'a kaydetme fonksiyonu
-const saveToLocalStorage = () => {
+export const saveToLocalStorage = () => {
   if (typeof window !== 'undefined') {
     try {
       localStorage.setItem('mockFirebase', JSON.stringify(mockDatabase));
+      // Veri değişikliğini diğer sekmelere/pencerelere bildirmek için özel bir olay tetikle
+      const event = new CustomEvent('firebase-data-changed', { detail: { timestamp: Date.now() } });
+      window.dispatchEvent(event);
     } catch (error) {
       console.error('LocalStorage kaydetme hatası:', error);
     }
   }
 };
+
+// Diğer sekmelerdeki veri değişikliklerini dinle
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (event) => {
+    if (event.key === 'mockFirebase' && event.newValue) {
+      try {
+        mockDatabase = JSON.parse(event.newValue);
+        // Veri değişikliğini bildirmek için özel bir olay tetikle
+        const syncEvent = new CustomEvent('firebase-data-synced', { detail: { timestamp: Date.now() } });
+        window.dispatchEvent(syncEvent);
+      } catch (error) {
+        console.error('LocalStorage senkronizasyon hatası:', error);
+      }
+    }
+  });
+}
 
 // Mock Firebase yapılandırma bilgileri
 const firebaseConfig = {
@@ -43,6 +63,33 @@ const app = {
   name: "[DEFAULT]",
   options: { ...firebaseConfig }
 };
+
+const auth = {
+  currentUser: null,
+  onAuthStateChanged: (callback: (user: any) => void) => {
+    callback(null);
+    return () => {};
+  },
+  signInWithEmailAndPassword: async () => ({ user: null }),
+  createUserWithEmailAndPassword: async () => ({ user: null }),
+  signOut: async () => {}
+};
+
+const firestore = {
+  collection: (path: string) => path
+};
+
+const storage = {
+  ref: (path: string) => ({
+    put: async () => ({
+      ref: {
+        getDownloadURL: async () => `https://mock-storage/${path}`
+      }
+    })
+  })
+};
+
+const analytics = null;
 
 // Mock Timestamp sınıfı
 export const Timestamp = {
@@ -63,145 +110,118 @@ export const Timestamp = {
   })
 };
 
-// Sorgu fonksiyonları
-export const where = (field: string, operator: string, value: any) => {
-  return { field, operator, value, type: 'where' };
-};
+// Firebase fonksiyonlarını dışa aktar
+export { app, auth, firestore, storage, analytics };
 
-export const orderBy = (field: string, direction: string = 'asc') => {
-  return { field, direction, type: 'orderBy' };
+// Mock Firebase fonksiyonları
+export const collection = (db: any, path: string) => path;
+export const doc = (db: any, path: string, id?: string) => id ? `${path}/${id}` : path;
+export const addDoc = async (collectionRef: string, data: any) => {
+  const id = `doc_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+  const path = collectionRef;
+  if (!mockDatabase[path]) mockDatabase[path] = {};
+  mockDatabase[path][id] = { ...data, id };
+  saveToLocalStorage();
+  return { id, path };
 };
-
-const auth = {
-  currentUser: null,
-  onAuthStateChanged: (callback: (user: any) => void) => {
-    // Mock auth state değişikliği
-    return () => {}; // Unsubscribe fonksiyonu
-  },
-  signInWithEmailAndPassword: async () => ({ user: null }),
-  createUserWithEmailAndPassword: async () => ({ user: null }),
-  signOut: async () => {}
+export const setDoc = async (docRef: string, data: any) => {
+  const parts = docRef.split('/');
+  const id = parts.pop() || '';
+  const path = parts.join('/');
+  if (!mockDatabase[path]) mockDatabase[path] = {};
+  mockDatabase[path][id] = { ...data, id };
+  saveToLocalStorage();
 };
-
-// Koleksiyon ve doküman yollarını yönetmek için yardımcı fonksiyonlar
-const getCollectionData = (path: string) => {
-  if (!mockDatabase[path]) {
-    mockDatabase[path] = {};
+export const updateDoc = async (docRef: string, data: any) => {
+  const parts = docRef.split('/');
+  const id = parts.pop() || '';
+  const path = parts.join('/');
+  if (mockDatabase[path] && mockDatabase[path][id]) {
+    mockDatabase[path][id] = { ...mockDatabase[path][id], ...data };
+    saveToLocalStorage();
   }
-  return mockDatabase[path];
 };
-
-const firestore = {
-  collection: (path: string) => ({
-    doc: (id?: string) => {
-      const docId = id || `mock-id-${Date.now()}`;
-      const collectionData = getCollectionData(path);
-      
-      return {
-        id: docId,
-        get: async () => {
-          const docData = collectionData[docId];
-          return {
-            exists: () => !!docData,
-            data: () => docData || null,
-            id: docId
-          };
-        },
-        set: async (data: any, options?: any) => {
-          if (options?.merge && collectionData[docId]) {
-            collectionData[docId] = { ...collectionData[docId], ...data };
-          } else {
-            collectionData[docId] = { ...data };
-          }
-          saveToLocalStorage(); // LocalStorage'a kaydet
-        },
-        update: async (data: any) => {
-          if (collectionData[docId]) {
-            collectionData[docId] = { ...collectionData[docId], ...data };
-            saveToLocalStorage(); // LocalStorage'a kaydet
-          }
-        },
-        delete: async () => {
-          delete collectionData[docId];
-          saveToLocalStorage(); // LocalStorage'a kaydet
-        }
-      };
-    },
-    add: async (data: any) => {
-      const docId = `mock-id-${Date.now()}`;
-      const collectionData = getCollectionData(path);
-      collectionData[docId] = { ...data };
-      saveToLocalStorage(); // LocalStorage'a kaydet
-      return { id: docId };
-    },
-    where: () => ({
-      get: async () => {
-        const collectionData = getCollectionData(path);
-        const docs = Object.entries(collectionData).map(([id, data]) => ({
-          id,
-          data: () => data,
-          exists: () => true
-        }));
-        return {
-          docs,
-          empty: docs.length === 0
-        };
-      }
-    }),
-    orderBy: () => ({
-      get: async () => {
-        const collectionData = getCollectionData(path);
-        const docs = Object.entries(collectionData).map(([id, data]) => ({
-          id,
-          data: () => data,
-          exists: () => true
-        }));
-        return {
-          docs,
-          empty: docs.length === 0
-        };
-      }
-    }),
-    limit: () => ({
-      get: async () => {
-        const collectionData = getCollectionData(path);
-        const docs = Object.entries(collectionData).map(([id, data]) => ({
-          id,
-          data: () => data,
-          exists: () => true
-        }));
-        return {
-          docs,
-          empty: docs.length === 0
-        };
-      }
-    }),
-    get: async () => {
-      const collectionData = getCollectionData(path);
-      const docs = Object.entries(collectionData).map(([id, data]) => ({
+export const deleteDoc = async (docRef: string) => {
+  const parts = docRef.split('/');
+  const id = parts.pop() || '';
+  const path = parts.join('/');
+  if (mockDatabase[path] && mockDatabase[path][id]) {
+    delete mockDatabase[path][id];
+    saveToLocalStorage();
+  }
+};
+export const getDoc = async (docRef: string) => {
+  const parts = docRef.split('/');
+  const id = parts.pop() || '';
+  const path = parts.join('/');
+  const data = mockDatabase[path]?.[id];
+  return {
+    exists: () => !!data,
+    data: () => data || null,
+    id
+  };
+};
+export const getDocs = async (queryRef: any) => {
+  const path = typeof queryRef === 'string' ? queryRef : queryRef.path;
+  const docs = mockDatabase[path] || {};
+  return {
+    empty: Object.keys(docs).length === 0,
+    size: Object.keys(docs).length,
+    docs: Object.entries(docs).map(([id, data]) => ({
+      id,
+      data: () => data,
+      exists: () => true
+    }))
+  };
+};
+export const query = (collectionRef: string) => ({ path: collectionRef });
+export const where = () => ({});
+export const orderBy = () => ({});
+export const limit = () => ({});
+export const serverTimestamp = () => new Date();
+export const onSnapshot = (ref: any, callback: Function) => {
+  const path = typeof ref === 'string' ? ref : ref.path;
+  // İlk çağrıda mevcut verileri gönder
+  setTimeout(() => {
+    const docs = mockDatabase[path] || {};
+    callback({
+      empty: Object.keys(docs).length === 0,
+      size: Object.keys(docs).length,
+      docs: Object.entries(docs).map(([id, data]) => ({
         id,
         data: () => data,
         exists: () => true
-      }));
-      return {
-        docs,
-        empty: docs.length === 0
-      };
-    }
-  })
+      }))
+    });
+  }, 0);
+
+  // Veri değişikliklerini dinle
+  if (typeof window !== 'undefined') {
+    const handler = () => {
+      const docs = mockDatabase[path] || {};
+      callback({
+        empty: Object.keys(docs).length === 0,
+        size: Object.keys(docs).length,
+        docs: Object.entries(docs).map(([id, data]) => ({
+          id,
+          data: () => data,
+          exists: () => true
+        }))
+      });
+    };
+
+    window.addEventListener('firebase-data-synced', handler);
+    window.addEventListener('firebase-data-changed', handler);
+
+    // Temizleme fonksiyonu döndür
+    return () => {
+      window.removeEventListener('firebase-data-synced', handler);
+      window.removeEventListener('firebase-data-changed', handler);
+    };
+  }
+  return () => {};
 };
 
-const storage = {
-  ref: (path: string) => ({
-    put: async (file: any) => ({
-      ref: {
-        getDownloadURL: async () => `https://mock-storage/${path}`
-      }
-    }),
-    delete: async () => {}
-  })
-};
-
-const analytics = null;
-
-export { app, auth, firestore, storage, analytics };
+// Yardımcı fonksiyonlar
+export const documentId = () => 'documentId';
+export const writeBatch = (db: any) => ({ commit: async () => {} });

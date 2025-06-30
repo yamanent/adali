@@ -10,7 +10,7 @@ import {
 } from './firebase-models';
 
 // Firebase mock servislerini içe aktarıyoruz
-import { firestore } from './firebase';
+import { firestore, mockDatabase, saveToLocalStorage } from './firebase';
 
 // BaseModel ve Guest tiplerini tanımlıyoruz// Firestore tipi tanımlamaları
 
@@ -42,16 +42,17 @@ export const Timestamp = {
 // Mock Firestore fonksiyonları
 export const collection = (db: any, path: string) => {
   // db parametresi kullanılmıyor ama Firebase API uyumluluğu için gerekli
-  return firestore.collection(path);
+  return path;
 };
 // Firebase API'sine uygun olarak doc fonksiyonu
 export const doc = (db: any, path: string, id?: string) => {
   // id parametresi opsiyonel olabilir
   if (!id) {
     // Boş bir ID ile doküman oluştur (rastgele ID)
-    return firestore.collection(path).doc("mock-" + Date.now());
+    const randomId = "mock-" + Date.now();
+    return `${path}/${randomId}`;
   }
-  return firestore.collection(path).doc(id);
+  return `${path}/${id}`;
 };
 export const addDoc = async (collectionRef: any, data: any) => collectionRef.add(data);
 export const setDoc = async (docRef: any, data: any, options?: any) => {
@@ -256,18 +257,12 @@ export const setDocument = async <TData extends object>(
     // Bu, `createdAt` alanının `serverTimestamp` ile ayarlanmasını sağlar.
     // Eğer `merge=true` ise, varolan bir doküman güncelleniyor (`isNew=false`), sadece `updatedAt` güncellenir.
     
-    // Doğrudan firestore koleksiyonunu kullanarak doc referansı oluşturuyoruz
-    const docRef = firestore.collection(collectionPath).doc(id);
+    // Doküman yolunu oluşturuyoruz
+    const docPath = `${collectionPath}/${id}`;
     const processedData = processDataForFirestore(data, !merge);
     
-    // Mock firestore için set metodunu düzenliyoruz
-    // Gerçek bir implementasyon olmadığı için sadece başarılı olduğunu varsayıyoruz
-    // merge parametresini de ekliyoruz
-    if (merge) {
-      await docRef.set(processedData, { merge });
-    } else {
-      await docRef.set(processedData);
-    }
+    // setDoc fonksiyonunu çağırıyoruz
+    await setDoc(docPath, processedData, { merge });
   } catch (error) {
     console.error(`FirestoreService: setDocument [${collectionPath}/${id}] hata:`, error);
     throw error;
@@ -289,7 +284,8 @@ export const updateDocument = async <TData extends object>(
 ): Promise<void> => {
   try {
     // `processDataForFirestore(data)` (isNew=false varsayılan) sadece `updatedAt`'i yönetir.
-    await updateDoc(doc(firestore, collectionPath, id), processDataForFirestore(data));
+    const docPath = `${collectionPath}/${id}`;
+    await updateDoc(docPath, processDataForFirestore(data));
   } catch (error) {
     console.error(`FirestoreService: updateDocument [${collectionPath}/${id}] hata:`, error);
     throw error;
@@ -303,7 +299,8 @@ export const updateDocument = async <TData extends object>(
  */
 export const deleteDocument = async (collectionPath: string, id: string): Promise<void> => {
   try {
-    await deleteDoc(doc(firestore, collectionPath, id));
+    const docPath = `${collectionPath}/${id}`;
+    await deleteDoc(docPath);
   } catch (error) {
     console.error(`FirestoreService: deleteDocument [${collectionPath}/${id}] hata:`, error);
     throw error;
@@ -319,8 +316,8 @@ export const deleteDocument = async (collectionPath: string, id: string): Promis
  */
 export const getDocument = async <TModel>(collectionPath: string, id: string): Promise<TModel | null> => {
   try {
-    const docRef = doc(firestore, collectionPath, id);
-    const docSnap: any = await getDoc(docRef);
+    const docPath = `${collectionPath}/${id}`;
+    const docSnap: any = await getDoc(docPath);
     if (docSnap.exists()) {
       // Doküman verisine ID'sini ekleyerek döndürür.
       return processDataFromFirestore<TModel>({ id: docSnap.id, ...docSnap.data() } as TModel);
@@ -345,7 +342,7 @@ export const getCollection = async <TModel>(
   queryConstraints: any[] = [] // Varsayılan olarak boş dizi, tüm koleksiyonu getirir.
 ): Promise<TModel[]> => {
   try {
-    const q = query(collection(firestore, collectionPath), ...queryConstraints);
+    const q = query(collectionPath, ...queryConstraints);
     const querySnapshot: any = await getDocs(q);
     return querySnapshot.docs.map((docSnap: any) =>
       processDataFromFirestore<TModel>({ id: docSnap.id, ...docSnap.data() } as TModel)
@@ -367,12 +364,12 @@ export const getCollection = async <TModel>(
  */
 // Temel model tipi tanımı - üstteki export edilmiş tanımı kullanıyoruz
 
-export const getCollectionWithRealtimeUpdates = <TModel extends BaseModel>(
+export const getCollectionWithRealtimeUpdates = <TModel>(
   collectionPath: string,
   callback: (data: TModel[]) => void,
   queryConstraints: any[] = []
 ): (() => void) => {
-  const q = query(collection(firestore, collectionPath), ...queryConstraints);
+  const q = query(collectionPath, ...queryConstraints);
   // onSnapshot fonksiyonunu sadece callback ile çağırıyoruz
   // hata durumunu konsola yazdırıyoruz
   const unsubscribe = onSnapshot(q, (querySnapshot: any) => {
@@ -398,7 +395,7 @@ export const getCollectionWithRealtimeUpdates = <TModel extends BaseModel>(
  */
 export const getAll = async <TModel extends BaseModel>(collectionPath: string): Promise<TModel[]> => {
   try {
-    const q = query(collection(firestore, collectionPath));
+    const q = query(collectionPath);
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map((doc: any) => processDataFromFirestore<TModel>({ id: doc.id, ...doc.data() } as TModel));
   } catch (error) {
@@ -415,8 +412,8 @@ export const getAll = async <TModel extends BaseModel>(collectionPath: string): 
  */
 export const getById = async <TModel extends BaseModel>(collectionPath: string, id: string): Promise<TModel | null> => {
   try {
-    const docRef = doc(firestore, collectionPath, id);
-    const docSnap = await getDoc(docRef);
+    const docPath = `${collectionPath}/${id}`;
+    const docSnap = await getDoc(docPath);
     if (docSnap.exists()) {
       return processDataFromFirestore<TModel>({ id: docSnap.id, ...docSnap.data() } as TModel);
     }
@@ -438,7 +435,7 @@ export const getFiltered = async <TModel extends BaseModel>(
   queryConstraints: QueryConstraint[] = []
 ): Promise<TModel[]> => {
   try {
-    const q = query(collection(firestore, collectionPath), ...queryConstraints);
+    const q = query(collectionPath, ...queryConstraints);
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map((doc: any) => processDataFromFirestore<TModel>({ id: doc.id, ...doc.data() } as TModel));
   } catch (error) {
