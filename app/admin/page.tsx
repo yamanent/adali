@@ -45,7 +45,7 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-md px-4">
         <div className="mb-8 text-center">
           <Image 
-            src="/Adali.svg" 
+            src="/Adali.png" 
             alt="Adalı Pansiyon Logo" 
             width={250}
             height={80}

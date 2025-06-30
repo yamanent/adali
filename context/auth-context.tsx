@@ -33,14 +33,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(true);
       try {
         const storedUser = localStorage.getItem("user");
-        if (storedUser) {
-          const parsedUser = JSON.parse(storedUser);
-          setUser(parsedUser);
-          setIsGuest(!!parsedUser.isGuest);
+        const storedExpiry = localStorage.getItem("user_expiry");
+        
+        if (storedUser && storedExpiry) {
+          const expiryTime = parseInt(storedExpiry, 10);
+          const now = Date.now();
+          
+          // Kullanıcı oturumu süresi dolmuş mu kontrol et (24 saat)
+          if (now < expiryTime) {
+            const parsedUser = JSON.parse(storedUser);
+            setUser(parsedUser);
+            setIsGuest(!!parsedUser.isGuest);
+          } else {
+            // Süresi dolmuşsa oturumu temizle
+            localStorage.removeItem("user");
+            localStorage.removeItem("user_expiry");
+            localStorage.removeItem("adminLoggedIn");
+          }
         }
       } catch (error) {
         console.error("Kullanıcı bilgileri yüklenirken hata:", error);
         localStorage.removeItem("user");
+        localStorage.removeItem("user_expiry");
+        localStorage.removeItem("adminLoggedIn");
       } finally {
         setIsLoading(false);
       }
@@ -97,8 +112,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Basit doğrulama - gerçek uygulamada API'den doğrulama yapılır
       if (mockUsers[username as keyof typeof mockUsers] && password === "123456") {
         const user = mockUsers[username as keyof typeof mockUsers];
-        // Kullanıcı bilgilerini localStorage'a kaydet
+        // Kullanıcı bilgilerini localStorage'a kaydet (24 saatlik süre ile)
+        const expiryTime = Date.now() + (24 * 60 * 60 * 1000); // 24 saat
         localStorage.setItem("user", JSON.stringify(user));
+        localStorage.setItem("user_expiry", expiryTime.toString());
         localStorage.setItem("adminLoggedIn", "true"); // Geriye dönük uyumluluk için
         setUser(user);
         setIsGuest(false);
@@ -133,8 +150,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isGuest: true
       };
 
-      // Kullanıcı bilgilerini localStorage'a kaydet
+      // Misafir kullanıcı bilgilerini localStorage'a kaydet (24 saatlik süre ile)
+      const expiryTime = Date.now() + (24 * 60 * 60 * 1000); // 24 saat
       localStorage.setItem("user", JSON.stringify(guestUser));
+      localStorage.setItem("user_expiry", expiryTime.toString());
       setUser(guestUser);
       setIsGuest(true);
       toast.success(`Hoş geldiniz, ${name}`);
@@ -151,6 +170,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Çıkış fonksiyonu
   const logout = () => {
     localStorage.removeItem("user");
+    localStorage.removeItem("user_expiry");
     localStorage.removeItem("adminLoggedIn");
     setUser(null);
     setIsGuest(false);
