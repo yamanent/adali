@@ -171,19 +171,26 @@ export const getDocs = async (queryRef: any) => {
   const path = typeof queryRef === 'string' ? queryRef : queryRef.path;
   const docs = mockDatabase[path] || {};
   
-  // Sonuçları oluştur
+  // Doküman nesnelerini oluştur
   const docArray = Object.entries(docs).map(([id, data]) => {
-    const docData = typeof data === 'object' ? data : {};
-    // Doğrudan get metodunu tanımlayalım
+    // Veri tipini kontrol et ve nesne değilse boş nesne kullan
+    const docData = typeof data === 'object' && data !== null ? data : {};
+    
+    // Doküman nesnesini oluştur
     const docObj: any = {
       id,
-      data: () => docData,
+      // data() metodu her zaman doküman verisini döndürür
+      data: () => ({ ...docData }),
+      // exists() metodu dokümanın var olup olmadığını kontrol eder
       exists: () => true,
-      get: (field: string) => {
-        if (!docData) return undefined;
+      // get() metodu belirli bir alanı döndürür
+      get: function(field: string) {
         return docData[field];
-      }
+      },
+      // Doğrudan alan erişimi için
+      _data: docData
     };
+    
     return docObj;
   });
   
@@ -192,27 +199,22 @@ export const getDocs = async (queryRef: any) => {
     empty: docArray.length === 0,
     size: docArray.length,
     docs: docArray,
-    forEach: (callback: (doc: any) => void) => docArray.forEach(callback),
-    // Sonuç nesnesinin kendisine de get metodu ekleyelim
-    get: (field: string) => {
-      if (field === 'docs') return docArray;
-      if (field === 'empty') return docArray.length === 0;
-      if (field === 'size') return docArray.length;
-      return undefined;
+    // forEach metodu
+    forEach: function(callback: (doc: any) => void) {
+      return docArray.forEach(callback);
     },
-    // Dizi benzeri erişim için
-    map: (callback: (doc: any) => any) => docArray.map(callback)
-  };
-  
-  // Dökümanların get metodunu kontrol edelim ve eksikse ekleyelim
-  result.docs.forEach((doc: any) => {
-    if (typeof doc.get !== 'function') {
-      doc.get = (field: string) => {
-        const data = doc.data();
-        return data ? data[field] : undefined;
-      };
+    // map metodu
+    map: function(callback: (doc: any) => any) {
+      return docArray.map(callback);
+    },
+    // get metodu
+    get: function(field: string) {
+      if (field === 'docs') return this.docs;
+      if (field === 'empty') return this.empty;
+      if (field === 'size') return this.size;
+      return undefined;
     }
-  });
+  };
   
   // Dizi gibi davranması için
   Object.defineProperty(result, 'length', {
