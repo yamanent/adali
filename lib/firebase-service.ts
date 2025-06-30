@@ -397,7 +397,23 @@ export const getAll = async <TModel extends BaseModel>(collectionPath: string): 
   try {
     const q = query(collectionPath);
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map((doc: any) => processDataFromFirestore<TModel>({ id: doc.id, ...doc.data() } as TModel));
+    
+    // Eğer docs dizisi varsa ve her belge get metoduna sahipse, standart yöntemi kullan
+    if (querySnapshot.docs && typeof querySnapshot.docs.map === 'function') {
+      return querySnapshot.docs.map((doc: any) => {
+        const data = doc.data ? doc.data() : doc;
+        return processDataFromFirestore<TModel>({ id: doc.id, ...data } as TModel);
+      });
+    } 
+    // Eğer querySnapshot bir dizi ise (mock Firebase durumunda)
+    else if (Array.isArray(querySnapshot)) {
+      return querySnapshot.map((doc: any) => {
+        const data = doc.data ? doc.data() : doc;
+        return processDataFromFirestore<TModel>({ id: doc.id, ...data } as TModel);
+      });
+    }
+    // Diğer durumlarda boş dizi döndür
+    return [];
   } catch (error) {
     console.error(`FirestoreService: getAll [${collectionPath}] hata:`, error);
     throw error;
@@ -437,7 +453,23 @@ export const getFiltered = async <TModel extends BaseModel>(
   try {
     const q = query(collectionPath, ...queryConstraints);
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map((doc: any) => processDataFromFirestore<TModel>({ id: doc.id, ...doc.data() } as TModel));
+    
+    // Eğer docs dizisi varsa ve her belge get metoduna sahipse, standart yöntemi kullan
+    if (querySnapshot.docs && typeof querySnapshot.docs.map === 'function') {
+      return querySnapshot.docs.map((doc: any) => {
+        const data = doc.data ? doc.data() : doc;
+        return processDataFromFirestore<TModel>({ id: doc.id, ...data } as TModel);
+      });
+    } 
+    // Eğer querySnapshot bir dizi ise (mock Firebase durumunda)
+    else if (Array.isArray(querySnapshot)) {
+      return querySnapshot.map((doc: any) => {
+        const data = doc.data ? doc.data() : doc;
+        return processDataFromFirestore<TModel>({ id: doc.id, ...data } as TModel);
+      });
+    }
+    // Diğer durumlarda boş dizi döndür
+    return [];
   } catch (error) {
     console.error(`FirestoreService: getFiltered [${collectionPath}] hata:`, error);
     throw error;

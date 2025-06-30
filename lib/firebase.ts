@@ -172,19 +172,37 @@ export const getDocs = async (queryRef: any) => {
   const docs = mockDatabase[path] || {};
   
   // Sonuçları oluştur
-  const docArray = Object.entries(docs).map(([id, data]) => ({
-    id,
-    data: () => data,
-    exists: () => true,
-    get: (field: string) => data ? data[field] : undefined
-  }));
+  const docArray = Object.entries(docs).map(([id, data]) => {
+    const docData = typeof data === 'object' ? data : {};
+    return {
+      id,
+      data: () => docData,
+      exists: () => true,
+      get: (field: string) => {
+        if (!docData) return undefined;
+        return docData[field];
+      }
+    };
+  });
   
-  return {
+  const result = {
     empty: docArray.length === 0,
     size: docArray.length,
     docs: docArray,
     forEach: (callback: (doc: any) => void) => docArray.forEach(callback)
   };
+  
+  // Dökümanların kendilerine de get metodu ekleyelim
+  result.docs.forEach(doc => {
+    if (!doc.get) {
+      doc.get = (field: string) => {
+        const data = doc.data();
+        return data ? data[field] : undefined;
+      };
+    }
+  });
+  
+  return result;
 };
 export const query = (collectionRef: string, ...queryConstraints: any[]) => ({ path: collectionRef, constraints: queryConstraints });
 export const where = () => ({});
