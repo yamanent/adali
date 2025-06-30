@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
-import { Guest } from "@/lib/firebase-models"; // Updated Guest model
+import { Guest } from "@/lib/firebase-service"; // Guest modeli firebase-service'den import edildi
 import { createGuest, listGuests, updateGuest, deleteGuest, searchGuests } from "@/lib/guest-service"; // Guest service functions
 
 export default function GuestsPage() {
@@ -149,11 +149,17 @@ export default function GuestsPage() {
     }
   };
 
-  // Tarih formatla (kullanılmıyorsa kaldırılabilir)
+  // Tarih formatla
   const formatDate = (dateString: string | undefined) => {
     if (!dateString) return "N/A";
     try {
+      // Geçersiz tarih kontrolü
       const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        console.log("Geçersiz tarih değeri:", dateString);
+        return "Geçersiz Tarih";
+      }
+      
       return new Intl.DateTimeFormat("tr-TR", {
         day: "2-digit",
         month: "2-digit",
@@ -162,7 +168,8 @@ export default function GuestsPage() {
         minute: "2-digit",
       }).format(date);
     } catch (error) {
-      return dateString;
+      console.error("Tarih formatlanırken hata:", error, "Tarih değeri:", dateString);
+      return "Geçersiz Tarih";
     }
   };
 
