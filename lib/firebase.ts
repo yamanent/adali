@@ -174,7 +174,8 @@ export const getDocs = async (queryRef: any) => {
   // Sonuçları oluştur
   const docArray = Object.entries(docs).map(([id, data]) => {
     const docData = typeof data === 'object' ? data : {};
-    return {
+    // Doğrudan get metodunu tanımlayalım
+    const docObj: any = {
       id,
       data: () => docData,
       exists: () => true,
@@ -183,6 +184,7 @@ export const getDocs = async (queryRef: any) => {
         return docData[field];
       }
     };
+    return docObj;
   });
   
   // Sonuç nesnesini oluştur
@@ -202,9 +204,9 @@ export const getDocs = async (queryRef: any) => {
     map: (callback: (doc: any) => any) => docArray.map(callback)
   };
   
-  // Dökümanların kendilerine de get metodu ekleyelim
-  result.docs.forEach(doc => {
-    if (!doc.get) {
+  // Dökümanların get metodunu kontrol edelim ve eksikse ekleyelim
+  result.docs.forEach((doc: any) => {
+    if (typeof doc.get !== 'function') {
       doc.get = (field: string) => {
         const data = doc.data();
         return data ? data[field] : undefined;
