@@ -2,6 +2,8 @@
 // Bu dosya, mock Firebase servisleri için gerekli model tanımlarını içerir
 // ve types.ts dosyasındaki tanımlarla uyumlu çalışacak şekilde düzenlenmiştir
 
+import { RoomStatus } from "./room-service";
+
 // Rezervasyon durum değerleri
 export type ReservationStatus = 
   'Onaylandı' | 
@@ -44,8 +46,8 @@ export interface Reservation {
   paymentStatus: PaymentStatus;
   status: ReservationStatus;
   notes?: string;
-  createdAt?: string;
-  updatedAt?: string;
+  createdAt: Date | string;
+  updatedAt: Date | string;
   createdBy?: string;
   source?: BookingSource;
 }
@@ -59,21 +61,23 @@ export interface EnrichedReservation extends Reservation {
   roomType?: string;
 }
 
-export interface Guest {
+export interface GuestModel {
   id: string;
   firstName: string;
   lastName: string;
-  email: string;
-  phone: string;
+  email?: string;
+  phone?: string;
   address?: string;
   city?: string;
   country?: string;
   identityNumber?: string;
   birthDate?: string;
   notes?: string;
-  createdAt?: string;
-  updatedAt?: string;
+  createdAt: Date | string;
+  updatedAt: Date | string;
 }
+
+export interface Guest extends GuestModel {}
 
 export interface Room {
   id: string;
@@ -82,12 +86,12 @@ export interface Room {
   type: string;
   capacity: number;
   price: number;
-  status: 'Boş' | 'Müsait' | 'Dolu' | 'Bakımda' | 'Temizleniyor';
+  status: RoomStatus;
   features?: string[];
   description?: string;
   imageUrl?: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: Date | string;
+  updatedAt: Date | string;
 }
 
 export interface Expense {
@@ -99,6 +103,6 @@ export interface Expense {
   description?: string;
   paymentMethod?: string;
   receiptUrl?: string;
-  createdAt?: string;
-  updatedAt?: string;
+  createdAt: Date | string;
+  updatedAt: Date | string;
 }

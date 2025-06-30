@@ -3,10 +3,11 @@
 
 // Firestore'dan import edilecek modeller
 import {
-  Reservation,
+  Reservation as ReservationModel,
   Room,
-  Expense,
-} from './firebase-models'; // Güncel modellerimiz
+  Guest as GuestModel,
+  Expense as ExpenseModel
+} from './firebase-models';
 
 // Firebase mock servislerini içe aktarıyoruz
 import { firestore } from './firebase';
@@ -19,11 +20,10 @@ export interface BaseModel {
   updatedAt: Date | string;
 }
 
-export interface Guest extends BaseModel {
-  firstName: string;
-  lastName: string;
-  email?: string;
-  phone?: string;
+// Model tanımlarını genişletelim
+export interface Reservation extends ReservationModel {}
+export interface Expense extends ExpenseModel {}
+export interface Guest extends GuestModel {
   nationality?: string;
   idNumber?: string;
   notes?: string;
@@ -400,7 +400,7 @@ export const getAll = async <TModel extends BaseModel>(collectionPath: string): 
   try {
     const q = query(collection(firestore, collectionPath));
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map((doc) => processDataFromFirestore<TModel>({ id: doc.id, ...doc.data() } as TModel));
+    return querySnapshot.docs.map((doc: any) => processDataFromFirestore<TModel>({ id: doc.id, ...doc.data() } as TModel));
   } catch (error) {
     console.error(`FirestoreService: getAll [${collectionPath}] hata:`, error);
     throw error;
@@ -440,7 +440,7 @@ export const getFiltered = async <TModel extends BaseModel>(
   try {
     const q = query(collection(firestore, collectionPath), ...queryConstraints);
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map((doc) => processDataFromFirestore<TModel>({ id: doc.id, ...doc.data() } as TModel));
+    return querySnapshot.docs.map((doc: any) => processDataFromFirestore<TModel>({ id: doc.id, ...doc.data() } as TModel));
   } catch (error) {
     console.error(`FirestoreService: getFiltered [${collectionPath}] hata:`, error);
     throw error;
@@ -508,12 +508,32 @@ export const remove = async (collectionPath: string, id: string): Promise<void> 
 // ... (diğer kodlar)
 // dışarıdan verilmemesini sağlar, çünkü bunlar servis tarafından yönetilir.
 
-type NewData<TModel> = Omit<TModel, 'id' | 'createdAt' | 'updatedAt'>;
+// Yeni veri tipi, id alanını hariç tutar ve createdAt/updatedAt alanlarını opsiyonel yapar
+export type NewData<T> = Omit<T, 'id'> & {
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+};
 
 // Rezervasyonlar için CRUD servisleri
 export const reservationService = {
-  add: (data: NewData<Reservation>) => addDocument<NewData<Reservation>>(COLLECTIONS.RESERVATIONS, data),
-  set: (id: string, data: Reservation, merge: boolean = true) => setDocument<Reservation>(COLLECTIONS.RESERVATIONS, id, data, merge),
+  add: (data: NewData<Reservation>) => {
+    // createdAt alanını garanti edelim
+    const dataWithDefaults = {
+      ...data,
+      createdAt: data.createdAt || new Date().toISOString(),
+      updatedAt: data.updatedAt || new Date().toISOString()
+    };
+    return addDocument<NewData<Reservation>>(COLLECTIONS.RESERVATIONS, dataWithDefaults);
+  },
+  set: (id: string, data: Reservation, merge: boolean = true) => {
+    // createdAt alanını garanti edelim
+    const dataWithDefaults = {
+      ...data,
+      createdAt: data.createdAt || new Date().toISOString(),
+      updatedAt: data.updatedAt || new Date().toISOString()
+    };
+    return setDocument<Reservation>(COLLECTIONS.RESERVATIONS, id, dataWithDefaults, merge);
+  },
   update: (id: string, data: Partial<Reservation>) => updateDocument<Reservation>(COLLECTIONS.RESERVATIONS, id, data),
   delete: (id: string) => deleteDocument(COLLECTIONS.RESERVATIONS, id),
   get: (id: string) => getDocument<Reservation>(COLLECTIONS.RESERVATIONS, id),
@@ -536,8 +556,24 @@ export const roomService = {
 
 // Giderler için CRUD servisleri
 export const expenseService = {
-  add: (data: NewData<Expense>) => addDocument<NewData<Expense>>(COLLECTIONS.EXPENSES, data),
-  set: (id: string, data: Expense, merge: boolean = true) => setDocument<Expense>(COLLECTIONS.EXPENSES, id, data, merge),
+  add: (data: NewData<Expense>) => {
+    // createdAt alanını garanti edelim
+    const dataWithDefaults = {
+      ...data,
+      createdAt: data.createdAt || new Date().toISOString(),
+      updatedAt: data.updatedAt || new Date().toISOString()
+    };
+    return addDocument<NewData<Expense>>(COLLECTIONS.EXPENSES, dataWithDefaults);
+  },
+  set: (id: string, data: Expense, merge: boolean = true) => {
+    // createdAt alanını garanti edelim
+    const dataWithDefaults = {
+      ...data,
+      createdAt: data.createdAt || new Date().toISOString(),
+      updatedAt: data.updatedAt || new Date().toISOString()
+    };
+    return setDocument<Expense>(COLLECTIONS.EXPENSES, id, dataWithDefaults, merge);
+  },
   update: (id: string, data: Partial<Expense>) => updateDocument<Expense>(COLLECTIONS.EXPENSES, id, data),
   delete: (id: string) => deleteDocument(COLLECTIONS.EXPENSES, id),
   get: (id: string) => getDocument<Expense>(COLLECTIONS.EXPENSES, id),

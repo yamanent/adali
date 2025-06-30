@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Guest } from "@/lib/firebase-service"; // Guest modeli firebase-service'den import edildi
 import { createGuest, listGuests, updateGuest, deleteGuest, searchGuests } from "@/lib/guest-service"; // Guest service functions
+import { formatDate } from "@/lib/utils"; // Tarih formatlama fonksiyonu
 
 export default function GuestsPage() {
   const [isLoading, setIsLoading] = useState(true);
@@ -232,7 +233,7 @@ export default function GuestsPage() {
                       <TableCell className="font-medium">{guest.firstName} {guest.lastName}</TableCell>
                       <TableCell>{guest.email || "-"}</TableCell>
                       <TableCell>{guest.phone || "-"}</TableCell>
-                      <TableCell>{formatDate(guest.updatedAt)}</TableCell>
+                      <TableCell>{guest.updatedAt ? formatDate(guest.updatedAt.toString()) : "-"}</TableCell>
                       <TableCell>
                         <Button variant="outline" size="sm" onClick={() => openEditForm(guest)} className="mr-2">
                           Düzenle

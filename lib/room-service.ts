@@ -3,18 +3,22 @@
 import { firestore } from "./firebase"; // Firestore mock servisi
 import { 
   collection, 
-  query, 
-  where, 
-  orderBy, 
-  getDocs, 
-  addDoc, 
-  updateDoc, 
-  doc, 
-  deleteDoc, 
-  getDoc 
-} from "./firebase-service"; // Firebase modüllerini mock servisimizden içe aktarıyoruz
-import { Room } from "./firebase-models";
-import { getById, getAll, getFiltered, create, update, remove } from "./firebase-service";
+  doc,
+  getDoc,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
+  orderBy,
+  serverTimestamp
+} from "./firebase-service"; // Firestore fonksiyonları
+import { Room } from "./firebase-models"; // Room modeli
+import { create, getAll, getById, getFiltered, update, remove } from "./firebase-service"; // CRUD fonksiyonları
+
+// Oda durumu için tip tanımı
+export type RoomStatus = "Boş" | "Müsait" | "Dolu" | "Bakımda" | "Temizleniyor";
 
 // Koleksiyon adları
 const ROOMS_COLLECTION = "rooms";
@@ -76,7 +80,7 @@ export async function deleteRoom(id: string): Promise<void> {
 /**
  * Odanın durumunu günceller
  */
-export async function updateRoomStatus(id: string, status: string): Promise<void> {
+export async function updateRoomStatus(id: string, status: RoomStatus): Promise<void> {
   await update(ROOMS_COLLECTION, id, { status });
 }
 
@@ -88,12 +92,12 @@ export async function initializeDefaultRooms(): Promise<void> {
   if (rooms.length === 0) {
     const now = new Date().toISOString();
     const defaultRooms = [
-      { name: 'Standart Oda 101', roomNumber: '101', type: 'Standart', capacity: 2, price: 500, status: 'Boş', description: 'Standart oda', createdAt: now, updatedAt: now },
-      { name: 'Standart Oda 102', roomNumber: '102', type: 'Standart', capacity: 2, price: 500, status: 'Boş', description: 'Standart oda', createdAt: now, updatedAt: now },
-      { name: 'Standart Oda 103', roomNumber: '103', type: 'Standart', capacity: 3, price: 700, status: 'Boş', description: 'Standart oda', createdAt: now, updatedAt: now },
-      { name: 'Deluxe Oda 201', roomNumber: '201', type: 'Deluxe', capacity: 2, price: 800, status: 'Boş', description: 'Deluxe oda', createdAt: now, updatedAt: now },
-      { name: 'Deluxe Oda 202', roomNumber: '202', type: 'Deluxe', capacity: 4, price: 1000, status: 'Boş', description: 'Deluxe oda', createdAt: now, updatedAt: now },
-      { name: 'Suit Oda 301', roomNumber: '301', type: 'Suit', capacity: 2, price: 1200, status: 'Boş', description: 'Suit oda', createdAt: now, updatedAt: now },
+      { name: 'Standart Oda 101', roomNumber: '101', type: 'Standart', capacity: 2, price: 500, status: 'Boş' as RoomStatus, description: 'Standart oda', createdAt: now, updatedAt: now },
+      { name: 'Standart Oda 102', roomNumber: '102', type: 'Standart', capacity: 2, price: 500, status: 'Boş' as RoomStatus, description: 'Standart oda', createdAt: now, updatedAt: now },
+      { name: 'Standart Oda 103', roomNumber: '103', type: 'Standart', capacity: 3, price: 700, status: 'Boş' as RoomStatus, description: 'Standart oda', createdAt: now, updatedAt: now },
+      { name: 'Deluxe Oda 201', roomNumber: '201', type: 'Deluxe', capacity: 2, price: 800, status: 'Boş' as RoomStatus, description: 'Deluxe oda', createdAt: now, updatedAt: now },
+      { name: 'Deluxe Oda 202', roomNumber: '202', type: 'Deluxe', capacity: 4, price: 1000, status: 'Boş' as RoomStatus, description: 'Deluxe oda', createdAt: now, updatedAt: now },
+      { name: 'Suit Oda 301', roomNumber: '301', type: 'Suit', capacity: 2, price: 1200, status: 'Boş' as RoomStatus, description: 'Suit oda', createdAt: now, updatedAt: now },
     ];
     
     for (const room of defaultRooms) {
