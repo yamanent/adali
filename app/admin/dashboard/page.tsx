@@ -51,7 +51,7 @@ export default function AdminDashboard() {
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold text-sage-800">Yönetici Paneli</h1>
-          <p className="text-sage-600 mt-1">Hoş geldiniz, bugün {new Date().toLocaleDateString('tr-TR', {day: 'numeric', month: 'long', year: 'numeric'})}</p>
+          <p className="text-sage-600 mt-1">Hoş geldiniz, bugün {formatDate(new Date())}</p>
         </div>
         <Button 
           onClick={handleLogout} 

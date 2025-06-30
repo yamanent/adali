@@ -23,7 +23,6 @@ export default function GuestsPage() {
     lastName: "",
     email: "",
     phone: "",
-    address: "",
     idNumber: "",
     nationality: "",
     notes: "",
@@ -107,7 +106,6 @@ export default function GuestsPage() {
       lastName: guest.lastName,
       email: guest.email || "",
       phone: guest.phone || "",
-      address: guest.address || "",
       idNumber: guest.idNumber || "",
       nationality: guest.nationality || "",
       notes: guest.notes || "",
@@ -127,7 +125,6 @@ export default function GuestsPage() {
       lastName: "",
       email: "",
       phone: "",
-      address: "",
       idNumber: "",
       nationality: "",
       notes: "",
@@ -280,10 +277,6 @@ export default function GuestsPage() {
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="phone" className="text-right">Telefon</Label>
                 <Input id="phone" name="phone" value={formState.phone || ""} onChange={handleInputChange} className="col-span-3" />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="address" className="text-right">Adres</Label>
-                <Input id="address" name="address" value={formState.address || ""} onChange={handleInputChange} className="col-span-3" />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="idNumber" className="text-right">Kimlik/Pasaport No</Label>
