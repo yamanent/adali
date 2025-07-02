@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Guest } from "@/lib/firebase-service"; // Guest modeli firebase-service'den import edildi
 import { createGuest, listGuests, updateGuest, deleteGuest, searchGuests } from "@/lib/guest-service"; // Guest service functions
 import { formatDate } from "@/lib/utils"; // Tarih formatlama fonksiyonu
+import { useAuth } from "@/context/auth-context"; // Auth context
 
 export default function GuestsPage() {
   const [isLoading, setIsLoading] = useState(true);
@@ -30,6 +31,7 @@ export default function GuestsPage() {
   });
 
   const router = useRouter();
+  const { user } = useAuth();
 
   useEffect(() => {
     // TODO: Replace with proper AuthContext check and RoleGate/protected route
@@ -79,17 +81,23 @@ export default function GuestsPage() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (!user) {
+      toast.error("Bu işlemi yapmak için giriş yapmalısınız.");
+      return;
+    }
+
     if (!formState.firstName || !formState.lastName) {
       toast.error("Ad ve Soyad alanları zorunludur.");
       return;
     }
 
     try {
+      const userLog = { uid: user.id, email: user.email };
       if (currentGuest?.id) { // Editing existing guest
-        await updateGuest(currentGuest.id, formState as Omit<Guest, 'id' | 'createdAt' | 'updatedAt'>);
+        await updateGuest(currentGuest.id, formState as Omit<Guest, 'id' | 'createdAt' | 'updatedAt'>, userLog);
         toast.success("Misafir başarıyla güncellendi.");
       } else { // Creating new guest
-        await createGuest(formState as Omit<Guest, 'id' | 'createdAt' | 'updatedAt'>);
+        await createGuest(formState as Omit<Guest, 'id' | 'createdAt' | 'updatedAt'>, userLog);
         toast.success("Misafir başarıyla oluşturuldu.");
       }
       resetForm();
@@ -134,11 +142,15 @@ export default function GuestsPage() {
   };
 
   const handleDeleteGuest = async (guestId: string) => {
+    if (!user) {
+      toast.error("Bu işlemi yapmak için giriş yapmalısınız.");
+      return;
+    }
     if (!confirm("Bu misafiri silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.")) {
       return;
     }
     try {
-      await deleteGuest(guestId);
+      await deleteGuest(guestId, { uid: user.id, email: user.email });
       toast.success("Misafir başarıyla silindi.");
       loadGuestsData(); // Refresh the list
     } catch (error) {

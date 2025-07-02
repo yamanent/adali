@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Reservation, Guest } from "@/lib/firebase-models"; // Guest modelini import et
 import { createReservation, updateReservation } from "@/lib/reservation-service"; // Corrected import
+import { useAuth } from '@/context/auth-context'; // Corrected import
 import { getAllRooms } from "@/lib/roomService";
 import { listGuests, createGuest, getGuest } from "@/lib/guest-service"; // Guest service
 import { Command, CommandInput, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
@@ -22,6 +23,8 @@ interface ReservationFormProps {
 }
 
 export default function ReservationForm({ reservation, onSave, onCancel }: ReservationFormProps) {
+  const { user } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
   const [rooms, setRooms] = useState<{id: string, name: string, type: string}[]>([]); // Oda modeline göre name kullanılabilir
   const [allGuests, setAllGuests] = useState<Guest[]>([]);
   const [selectedGuestId, setSelectedGuestId] = useState<string | null>(null);
@@ -36,22 +39,23 @@ export default function ReservationForm({ reservation, onSave, onCancel }: Reser
   });
 
   const [formData, setFormData] = useState<Omit<Reservation, 'id' | 'createdAt' | 'updatedAt' | 'createdBy'>>({
-    guestId: "", // guestId olarak değişti
-    roomId: "", // roomNumber yerine roomId
+    guestId: "",
+    roomId: "",
     checkInDate: "",
     checkOutDate: "",
-    roomType: "",
-    guestCount: 1,
+    adults: 1,
+    children: 0,
     totalPrice: 0,
-    paymentStatus: "Bekliyor" as Reservation["paymentStatus"],
-    reservationChannel: "Website" as Reservation["reservationChannel"],
+    paymentStatus: "Bekliyor",
+    status: "Beklemede",
+    source: "Doğrudan",
     notes: ""
   });
 
   const fetchRoomsAndGuests = useCallback(async () => {
     try {
       const roomData = await getAllRooms(); // roomService'den odaları al
-      setRooms(roomData.map(r => ({ id: r.id, name: r.name, type: r.type }))); // Modelinize göre 'name' veya 'number'
+      setRooms(roomData.map(r => ({ id: r.id, name: r.name || 'İsimsiz Oda', type: r.type })));
 
       const guestData = await listGuests();
       setAllGuests(guestData);
@@ -100,10 +104,10 @@ export default function ReservationForm({ reservation, onSave, onCancel }: Reser
         adults: 1,
         children: 0,
         totalPrice: 0,
-        paymentStatus: 'unpaid',
-        status: 'pending',
+        paymentStatus: 'Bekliyor',
+        status: 'Beklemede',
         notes: "",
-        roomType: ""
+        source: 'Doğrudan'
       });
     }
   }, [reservation, rooms]);
@@ -114,14 +118,7 @@ export default function ReservationForm({ reservation, onSave, onCancel }: Reser
     const val = type === "number" ? parseInt(value) || 0 : value;
     setFormData(prev => ({ ...prev, [name]: val }));
 
-    if (name === "roomId") {
-      const selectedRoom = rooms.find(room => room.id === value);
-      if (selectedRoom) {
-        setFormData(prev => ({ ...prev, roomType: selectedRoom.type }));
-      } else {
-        setFormData(prev => ({ ...prev, roomType: "" }));
-      }
-    }
+
   };
 
   const handleGuestSelect = (guestId: string) => {
@@ -136,12 +133,19 @@ export default function ReservationForm({ reservation, onSave, onCancel }: Reser
   };
 
   const handleSaveNewGuest = async () => {
+    if (!user) {
+      toast.error("Bu işlemi yapmak için giriş yapmış olmalısınız.");
+      return;
+    }
     if (!newGuestForm.firstName || !newGuestForm.lastName) {
       toast.error("Yeni misafir için ad ve soyad zorunludur.");
       return;
     }
     try {
-      const newGuestId = await createGuest(newGuestForm as Omit<Guest, 'id' | 'createdAt' | 'updatedAt'>);
+      const newGuestId = await createGuest(
+        newGuestForm as Omit<Guest, 'id' | 'createdAt' | 'updatedAt'>,
+        { uid: user.id, email: user.email }
+      );
       toast.success("Yeni misafir başarıyla eklendi.");
       setIsNewGuestModalOpen(false);
       setNewGuestForm({ firstName: "", lastName: "", email: "", phone: "" }); // Formu temizle
@@ -168,7 +172,12 @@ export default function ReservationForm({ reservation, onSave, onCancel }: Reser
         await updateReservation(reservation.id, finalData);
         toast.success("Rezervasyon başarıyla güncellendi!");
       } else {
-        await createReservation(finalData);
+        if (!user) {
+          toast.error('Bu işlemi yapmak için giriş yapmış olmalısınız.');
+          setIsLoading(false);
+          return;
+        }
+        await createReservation(finalData, { id: user.id, email: user.email });
         toast.success("Yeni rezervasyon oluşturuldu!");
       }
       onSave(); // Parent component'e bildir
@@ -327,18 +336,6 @@ export default function ReservationForm({ reservation, onSave, onCancel }: Reser
                 </option>
               ))}
             </select>
-          </div>
-          
-          <div>
-            <Label htmlFor="roomType">Oda Tipi</Label>
-            <Input
-              id="roomType"
-              name="roomType"
-              value={formData.roomType || ""}
-              onChange={handleFormInputChange}
-              readOnly
-              className="bg-gray-100"
-            />
           </div>
         </div>
       </div>

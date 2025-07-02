@@ -8,9 +8,14 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useAuth } from "@/context/auth-context";
 import { UserRole } from "@/types/auth";
+import Link from "next/link";
+import { getLatestLogs } from "@/lib/log-service";
+import { type Log } from "@/lib/firebase-models";
+import { Badge } from "@/components/ui/badge";
 
 export default function AdminDashboard() {
   const [isLoading, setIsLoading] = useState(true);
+  const [latestLogs, setLatestLogs] = useState<Log[]>([]);
   const router = useRouter();
   const { user } = useAuth();
 
@@ -22,11 +27,20 @@ export default function AdminDashboard() {
       return;
     }
 
-    // Sayfa yüklendi
-    console.log("Dashboard sayfası yüklendi");
-    
-    setIsLoading(false);
-    setIsLoading(false);
+    const fetchDashboardData = async () => {
+      setIsLoading(true);
+      try {
+        const logs = await getLatestLogs(5); // Son 5 log kaydını al
+        setLatestLogs(logs);
+      } catch (error) {
+        console.error("Failed to fetch latest logs:", error);
+        toast.error("Son aktivite kayıtları getirilemedi.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDashboardData();
   }, [router]);
 
   // Dashboard için gerekli fonksiyonlar buraya eklenebilir
@@ -264,36 +278,66 @@ export default function AdminDashboard() {
         </CardContent>
       </Card>
 
+      {/* Son Etkinlikler (Loglar) Kartı */}
       <Card className="border-sage-200 shadow-sm">
-        <CardHeader className="bg-gradient-to-r from-sage-50 to-white pb-4">
-          <CardTitle className="text-sage-800 flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-sage-600">
-              <path d="m12 8-9.04 9.06a2.82 2.82 0 1 0 3.98 3.98L16 12"/>
-              <circle cx="17" cy="7" r="5"/>
-            </svg>
-            Sistem Kayıtları
-          </CardTitle>
-          <CardDescription>Log kayıtları artık Telegram üzerinden takip edilmektedir.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="py-4 border rounded-lg bg-sage-50/30 px-4">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="bg-blue-100 text-blue-700 p-2 rounded-full">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
-                  <path d="M12 9v4"/>
-                  <path d="M12 17h.01"/>
-                </svg>
-              </div>
-              <div>
-                <p className="font-medium">Tüm giriş ve erişim logları Telegram botunuza gönderilmektedir.</p>
-                <p className="text-sm text-sage-600 mt-1">Telegram botunuzu yapılandırmak için lib/telegram.ts dosyasını düzenleyin.</p>
-              </div>
-            </div>
-            <div className="text-xs text-sage-500 border-t pt-3 mt-2">
-              Son güncelleme: {new Date().toLocaleDateString('tr-TR')}
-            </div>
+        <CardHeader className="bg-gradient-to-r from-sage-50 to-white pb-4 flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="text-sage-800 flex items-center gap-2 text-xl sm:text-2xl">
+               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 20h.01" />
+                <path d="M12 14h.01" />
+                <path d="M12 8h.01" />
+                <path d="M12 2h.01" />
+                <path d="M20 12h.01" />
+                <path d="M14 12h.01" />
+                <path d="M8 12h.01" />
+                <path d="M2 12h.01" />
+              </svg>
+              Son Etkinlikler
+            </CardTitle>
+            <CardDescription className="text-sm sm:text-base">Sistemdeki en son aktiviteler</CardDescription>
           </div>
+          <Button asChild variant="outline" size="sm" className="border-sage-300 hover:bg-sage-50">
+            <Link href="/admin/logs">Tümünü Gör</Link>
+          </Button>
+        </CardHeader>
+        <CardContent className="pt-4">
+          {latestLogs.length > 0 ? (
+            <ul className="space-y-3">
+              {latestLogs.map((log) => (
+                <li key={log.id} className="flex items-start gap-3 p-2 rounded-lg hover:bg-sage-50/50 transition-colors">
+                  <div className="mt-1">
+                    <Badge 
+                      variant={log.level === 'error' ? 'destructive' : log.level === 'warn' ? 'default' : 'secondary'}
+                      className={log.level === 'warn' ? 'bg-amber-500 text-white hover:bg-amber-600' : ''}
+                    >
+                      {log.level.toUpperCase()}
+                    </Badge>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm text-sage-800 font-medium">{log.message}</p>
+                    <p className="text-xs text-sage-500">
+                      {formatDate(log.timestamp as any, { 
+                        day: '2-digit', 
+                        month: 'long', 
+                        year: 'numeric', 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                      })} tarafından {log.userEmail}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="text-center py-8 text-sage-500">
+              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-2 opacity-50">
+                 <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
+                <path d="M8 12h8" />
+              </svg>
+              <p>Henüz görüntülenecek bir aktivite yok.</p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

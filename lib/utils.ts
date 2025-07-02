@@ -6,7 +6,14 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 // Tarih formatlamak için yardımcı fonksiyon
-export function formatDate(date: string | Date | undefined | null): string {
+export function formatDate(
+  date: string | Date | undefined | null,
+  options: Intl.DateTimeFormatOptions = {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }
+): string {
   if (!date) return "";
   
   try {
@@ -31,11 +38,7 @@ export function formatDate(date: string | Date | undefined | null): string {
       dateObj = date;
     }
     
-    return new Intl.DateTimeFormat("tr-TR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric"
-    }).format(dateObj);
+    return new Intl.DateTimeFormat("tr-TR", options).format(dateObj);
   } catch (error) {
     console.error("Tarih formatlanırken hata:", error);
     return typeof date === 'string' ? date : "";

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from '@/context/auth-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 // Reservation ve Guest modellerini firebase-models'dan al
-import { Reservation, Guest } from "@/lib/firebase-models";
+import { Reservation, Guest, EnrichedReservation } from "@/lib/firebase-models";
 import {
   getAllReservations,
   deleteReservation,
@@ -18,7 +19,7 @@ import {
 } from "@/lib/reservation-service"; // reservation-service.ts kullanılıyor
 import { listGuests } from "@/lib/guest-service"; // Misafirleri çekmek için
 import ReservationForm from "@/components/reservation/ReservationForm";
-import ReservationList, { EnrichedReservation } from "@/components/reservation/ReservationList"; // EnrichedReservation tipini al
+import ReservationList from "@/components/reservation/ReservationList";
 
 export default function ReservationsPage() {
   const [isLoading, setIsLoading] = useState(true);
@@ -32,6 +33,7 @@ export default function ReservationsPage() {
   const [dateRangeStart, setDateRangeStart] = useState<string>("");
   const [dateRangeEnd, setDateRangeEnd] = useState<string>("");
   
+  const { user } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -68,9 +70,13 @@ export default function ReservationsPage() {
   };
 
   const handleDeleteReservation = async (id: string) => {
+    if (!user) {
+      toast.error('Bu işlemi yapmak için giriş yapmış olmalısınız.');
+      return;
+    }
     if (window.confirm("Bu rezervasyonu silmek istediğinize emin misiniz?")) {
       try {
-        await deleteReservation(id);
+        await deleteReservation(id, { id: user.id, email: user.email });
         toast.success("Rezervasyon başarıyla silindi.");
         loadInitialData(); // Veriyi yeniden yükle
       } catch (error) {

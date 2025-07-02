@@ -106,3 +106,20 @@ export interface Expense {
   createdAt: Date | string;
   updatedAt: Date | string;
 }
+
+// Log kaydı modeli
+import { Timestamp } from 'firebase/firestore';
+
+// ... (dosyanın geri kalanı)
+
+export interface Log {
+  id: string;
+  timestamp: Date | string | Timestamp;
+  level: 'info' | 'warn' | 'error';
+  message: string;
+  details?: Record<string, any>;
+  userId?: string;
+  userEmail?: string;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}

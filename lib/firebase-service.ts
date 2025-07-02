@@ -3,7 +3,8 @@ import {
   Reservation as ReservationModel,
   Room,
   Guest as GuestModel,
-  Expense as ExpenseModel
+  Expense as ExpenseModel,
+  Log as LogModel
 } from './firebase-models';
 import { db } from './firebase';
 import {
@@ -44,6 +45,7 @@ export interface BaseModel {
 
 export interface Reservation extends ReservationModel {}
 export interface Expense extends ExpenseModel {}
+export interface Log extends LogModel {}
 export interface Guest extends GuestModel {
   nationality?: string;
   idNumber?: string;
@@ -57,6 +59,7 @@ export const COLLECTIONS = {
   EXPENSES: 'expenses',
   GUESTS: 'guests',
   USERS: 'users',
+  LOGS: 'logs',
 };
 
 // --- Veri Dönüşüm Yardımcıları ---
@@ -298,6 +301,15 @@ export const guestService = {
   getAll: (constraints: QueryConstraint[] = [orderBy("fullName", "asc")]) => getCollection<Guest>(COLLECTIONS.GUESTS, constraints),
   listen: (callback: (data: Guest[]) => void, constraints: QueryConstraint[] = [orderBy("fullName", "asc")]) =>
     getCollectionWithRealtimeUpdates<Guest>(COLLECTIONS.GUESTS, callback, constraints),
+};
+
+// Loglar için CRUD servisleri
+export const logService = {
+  add: (data: NewData<Log>) => addDocument(COLLECTIONS.LOGS, data),
+  get: (id: string) => getDocument<Log>(COLLECTIONS.LOGS, id),
+  getAll: (constraints: QueryConstraint[] = [orderBy("timestamp", "desc")]) => getCollection<Log>(COLLECTIONS.LOGS, constraints),
+  listen: (callback: (data: Log[]) => void, constraints: QueryConstraint[] = [orderBy("timestamp", "desc")]) =>
+    getCollectionWithRealtimeUpdates<Log>(COLLECTIONS.LOGS, callback, constraints),
 };
 
 // Firebase'den sorgu oluşturmak için kullanılan yardımcı fonksiyonları (query constraints)

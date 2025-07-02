@@ -10,12 +10,28 @@ import {
 } from "./firebase-service";
 import type { Reservation, Room, Guest } from "./firebase-models";
 import { getGuest } from "./guest-service"; // Misafir detayları için bu hala gerekli
+import { createLog } from './log-service';
 
 /**
  * Tüm rezervasyonları getirir.
  */
-export async function getAllReservations(): Promise<Reservation[]> {
-  return await reservationService.getAll();
+/**
+ * Tüm rezervasyonları gerçek zamanlı olarak dinler.
+ * @param onUpdate - Rezervasyonlar güncellendiğinde çağrılacak callback.
+ * @param onError - Hata durumunda çağrılacak callback.
+ * @returns Dinlemeyi durdurmak için bir unsubscribe fonksiyonu.
+ */
+export function getAllReservations(
+  onUpdate: (reservations: Reservation[]) => void,
+  onError: (error: Error) => void
+): () => void {
+  // FirebaseService'in listen metodunu kullanarak gerçek zamanlı dinleyici oluşturuyoruz.
+  // Bu metodun, koleksiyondaki değişiklikleri dinleyip, veriyi onUpdate callback'ine, 
+  // hataları ise onError callback'ine ilettiğini varsayıyoruz.
+  return reservationService.listen(
+    (data) => onUpdate(data as Reservation[]),
+    onError
+  );
 }
 
 /**
@@ -67,8 +83,30 @@ export async function getReservationsByStatus(status: Reservation['status']): Pr
 /**
  * Yeni bir rezervasyon oluşturur.
  */
-export async function createReservation(reservationData: Omit<Reservation, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
-  return await reservationService.add(reservationData);
+export async function createReservation(
+  reservationData: Omit<Reservation, 'id' | 'createdAt' | 'updatedAt'>,
+  user: { id: string; email: string | null }
+): Promise<string> {
+  const newReservationId = await reservationService.add(reservationData);
+
+  // Odanın durumunu 'dolu' olarak güncelle
+  await roomService.update(reservationData.roomId, { status: 'Dolu' });
+
+  // Log kaydı oluştur
+  await createLog(
+    'info',
+    `Yeni rezervasyon oluşturuldu (ID: ${newReservationId})`,
+    {
+      guestId: reservationData.guestId,
+      roomId: reservationData.roomId,
+      checkIn: reservationData.checkInDate,
+      checkOut: reservationData.checkOutDate,
+      totalPrice: reservationData.totalPrice,
+    },
+    { uid: user.id, email: user.email }
+  );
+
+  return newReservationId;
 }
 
 /**
@@ -81,8 +119,30 @@ export async function updateReservation(id: string, reservationData: Partial<Res
 /**
  * Bir rezervasyonu siler.
  */
-export async function deleteReservation(id: string): Promise<void> {
+export async function deleteReservation(id: string, user: { id: string; email: string | null }): Promise<void> {
+  // Silmeden önce rezervasyon bilgilerini alarak loglama için sakla
+  const reservationToDelete = await reservationService.get(id);
+  if (!reservationToDelete) {
+    console.error(`Silinecek rezervasyon bulunamadı: ${id}`);
+    // İsteğe bağlı olarak burada bir hata fırlatılabilir
+    // throw new Error('Reservation not found');
+    return; // Rezervasyon yoksa işlemi sonlandır
+  }
+
   await reservationService.delete(id);
+
+  // Log kaydı oluştur
+  await createLog(
+    'warn',
+    `Rezervasyon silindi (ID: ${id})`,
+    {
+      guestId: reservationToDelete.guestId,
+      roomId: reservationToDelete.roomId,
+      checkIn: reservationToDelete.checkInDate,
+      checkOut: reservationToDelete.checkOutDate,
+    },
+    { uid: user.id, email: user.email }
+  );
 }
 
 /**

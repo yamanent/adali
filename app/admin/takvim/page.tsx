@@ -20,37 +20,48 @@ export default function CalendarPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Oturum kontrolü
     const isLoggedIn = localStorage.getItem("adminLoggedIn");
     if (isLoggedIn !== "true") {
       router.push("/admin");
       return;
     }
 
-    loadData();
-  }, [router]);
+    setIsLoading(true);
 
-  const loadData = async () => {
-    try {
-      // Önce varsayılan odaları oluşturalım
-      await initializeDefaultRooms();
-      
-      const allReservations = await getAllReservations();
-      const allRooms = await getAllRooms();
-      
-      setReservations(allReservations);
-      setRooms(allRooms.map(room => ({ 
-        id: room.id, 
-        number: room.roomNumber, 
-        type: room.type
-      })));
-      setIsLoading(false);
-    } catch (error) {
-      console.error("Veriler yüklenirken hata:", error);
-      toast.error("Veriler yüklenirken bir hata oluştu.");
-      setIsLoading(false);
-    }
-  };
+    // Odaları bir kez yükle
+    const fetchRooms = async () => {
+      try {
+        // await initializeDefaultRooms(); // Bu script ile zaten yapıldı, tekrar gerek yok.
+        const allRooms = await getAllRooms();
+        setRooms(allRooms.map(room => ({ 
+          id: room.id, 
+          number: room.roomNumber, 
+          type: room.type
+        })));
+      } catch (error) {
+        console.error("Odalar yüklenirken hata:", error);
+        toast.error("Odalar yüklenirken bir hata oluştu.");
+      }
+    };
+
+    fetchRooms();
+
+    // Rezervasyonları gerçek zamanlı dinle
+    const unsubscribe = getAllReservations(
+      (reservations: Reservation[]) => {
+        setReservations(reservations);
+        setIsLoading(false);
+      },
+      (error: Error) => {
+        console.error("Rezervasyonları dinlerken hata:", error);
+        toast.error("Rezervasyonlar güncellenirken bir hata oluştu.");
+        setIsLoading(false);
+      }
+    );
+
+    // Component unmount olduğunda dinleyiciyi kaldır
+    return () => unsubscribe();
+  }, [router]);
 
   const handlePrevious = () => {
     const newDate = new Date(currentDate);

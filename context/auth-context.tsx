@@ -8,6 +8,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { User, UserRole, ROLE_PERMISSIONS } from "@/types/auth";
 import { toast } from "sonner";
+import { createLog } from "@/lib/log-service"; // Loglama fonksiyonunu import et
 
 interface AuthContextType {
   user: User | null;
@@ -119,6 +120,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.setItem("adminLoggedIn", "true"); // Geriye dönük uyumluluk için
         setUser(user);
         setIsGuest(false);
+
+        // Kullanıcı girişini logla
+        await createLog(
+          'info',
+          `Kullanıcı sisteme giriş yaptı: ${user.email}`,
+          { role: user.role },
+          { uid: user.id, email: user.email }
+        );
+
         toast.success(`Hoş geldiniz, ${user.displayName}`);
         return true;
       } else {

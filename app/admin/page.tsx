@@ -49,7 +49,8 @@ export default function AdminLoginPage() {
             alt="Adalı Pansiyon Logo" 
             width={250}
             height={80}
-            className="mx-auto mb-6 h-auto"
+            className="mx-auto mb-6"
+            style={{ height: 'auto' }}
             priority
           />
         </div>

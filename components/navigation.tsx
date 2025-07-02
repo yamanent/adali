@@ -69,6 +69,7 @@ export default function Navigation() {
               width={310}
               height={100}
               className="object-contain"
+              style={{ height: 'auto' }}
               priority
             />
           </Link>

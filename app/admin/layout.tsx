@@ -76,7 +76,8 @@ export default function AdminLayout({
                   alt="Adalı Pansiyon Admin" 
                   width={200}
                   height={60}
-                  className="object-contain h-auto"
+                  className="object-contain"
+                  style={{ height: 'auto' }}
                   priority
                 />
               </Link>
@@ -138,6 +139,7 @@ export default function AdminLayout({
                   width={150}
                   height={40}
                   className="object-contain"
+                  style={{ height: 'auto' }}
                   priority
                 />
               </Link>
