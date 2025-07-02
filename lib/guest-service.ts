@@ -1,75 +1,24 @@
 // Firebase servislerini firebase-service.ts dosyasından içe aktarıyoruz
-import { firestore } from './firebase';
 import {
-  collection,
-  doc,
-  addDoc,
-  getDoc,
-  updateDoc,
-  deleteDoc,
-  query,
-  getDocs,
-  Timestamp,
+  getCollection,
+  getDocument,
+  addDocument,
+  updateDocument,
+  deleteDocument,
+  Guest,
+  COLLECTIONS,
 } from './firebase-service';
 
-// Guest modelini firebase-service.ts'den içe aktarıyoruz
-import { Guest } from './firebase-service';
-
-const GUESTS_COLLECTION = 'guests';
-
-// Firestore'dan gelen veriyi Guest tipine dönüştürmek için yardımcı fonksiyon
-const mapDocumentToGuest = (docSnapshot: any): Guest => {
-  const data = docSnapshot.data();
-  
-  // Tarih alanlarını güvenli bir şekilde dönüştür
-  const processTimestamp = (timestamp: any): string => {
-    if (!timestamp) return new Date().toISOString();
-    
-    // Timestamp nesnesiyse ve toDate fonksiyonu varsa
-    if (timestamp && typeof timestamp === 'object' && typeof timestamp.toDate === 'function') {
-      return timestamp.toDate().toISOString();
-    }
-    
-    // Timestamp nesnesiyse ama toDate fonksiyonu yoksa (localStorage'dan gelmiş olabilir)
-    if (timestamp && typeof timestamp === 'object' && timestamp.seconds !== undefined) {
-      const milliseconds = timestamp.seconds * 1000 + (timestamp.nanoseconds || 0) / 1000000;
-      return new Date(milliseconds).toISOString();
-    }
-    
-    // Zaten string ise
-    if (typeof timestamp === 'string') {
-      return timestamp;
-    }
-    
-    // Date nesnesi ise
-    if (timestamp instanceof Date) {
-      return timestamp.toISOString();
-    }
-    
-    return new Date().toISOString();
-  };
-  
-  return {
-    id: docSnapshot.id,
-    ...data,
-    createdAt: processTimestamp(data.createdAt),
-    updatedAt: processTimestamp(data.updatedAt),
-  } as Guest;
-};
+const GUESTS_COLLECTION = COLLECTIONS.GUESTS;
 
 /**
  * Creates a new guest in Firestore.
  * @param guestData - The data for the new guest.
  * @returns The ID of the newly created guest.
  */
-export const createGuest = async (guestData: Omit<Guest, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> => {
+export const createGuest = (guestData: Omit<Guest, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> => {
   try {
-    const docRef = await addDoc(GUESTS_COLLECTION, {
-      ...guestData,
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
-    });
-    return docRef.id;
+    return addDocument(GUESTS_COLLECTION, guestData);
   } catch (error) {
     console.error('Error creating guest:', error);
     throw new Error('Failed to create guest.');
@@ -81,14 +30,9 @@ export const createGuest = async (guestData: Omit<Guest, 'id' | 'createdAt' | 'u
  * @param guestId - The ID of the guest to retrieve.
  * @returns The guest data or null if not found.
  */
-export const getGuest = async (guestId: string): Promise<Guest | null> => {
+export const getGuest = (guestId: string): Promise<Guest | null> => {
   try {
-    const docPath = `${GUESTS_COLLECTION}/${guestId}`;
-    const docSnap = await getDoc(docPath);
-    if (docSnap.exists()) {
-      return mapDocumentToGuest(docSnap);
-    }
-    return null;
+    return getDocument<Guest>(GUESTS_COLLECTION, guestId);
   } catch (error) {
     console.error('Error getting guest:', error);
     throw new Error('Failed to retrieve guest.');
@@ -101,13 +45,9 @@ export const getGuest = async (guestId: string): Promise<Guest | null> => {
  * @param updatedData - An object containing the fields to update.
  * @returns A promise that resolves when the update is complete.
  */
-export const updateGuest = async (guestId: string, updatedData: Partial<Omit<Guest, 'id' | 'createdAt' | 'updatedAt'>>): Promise<void> => {
+export const updateGuest = (guestId: string, updatedData: Partial<Omit<Guest, 'id' | 'createdAt' | 'updatedAt'>>): Promise<void> => {
   try {
-    const docPath = `${GUESTS_COLLECTION}/${guestId}`;
-    await updateDoc(docPath, {
-      ...updatedData,
-      updatedAt: Timestamp.now(),
-    });
+    return updateDocument(GUESTS_COLLECTION, guestId, updatedData);
   } catch (error) {
     console.error('Error updating guest:', error);
     throw new Error('Failed to update guest.');
@@ -119,16 +59,11 @@ export const updateGuest = async (guestId: string, updatedData: Partial<Omit<Gue
  * @param guestId - The ID of the guest to delete.
  * @returns A promise that resolves when the deletion is complete.
  */
-export const deleteGuest = async (guestId: string): Promise<void> => {
+export const deleteGuest = (guestId: string): Promise<void> => {
   try {
-    const docPath = `${GUESTS_COLLECTION}/${guestId}`;
-    await deleteDoc(docPath);
+    return deleteDocument(GUESTS_COLLECTION, guestId);
   } catch (error) {
     console.error('Error deleting guest:', error);
-    // Firestore'da referans bütünlüğü kontrolü olmadığı için,
-    // bu misafirin rezervasyonları olup olmadığını kontrol etmek ve
-    // silme işlemini engellemek veya kullanıcıyı uyarmak gerekebilir.
-    // Şimdilik sadece hata logluyoruz.
     throw new Error('Failed to delete guest.');
   }
 };
@@ -137,18 +72,15 @@ export const deleteGuest = async (guestId: string): Promise<void> => {
  * Lists all guests from Firestore.
  * @returns An array of guest objects.
  */
-export const listGuests = async (): Promise<Guest[]> => {
+export const listGuests = (): Promise<Guest[]> => {
   try {
-    const q = query(GUESTS_COLLECTION);
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(mapDocumentToGuest);
+    return getCollection<Guest>(GUESTS_COLLECTION);
   } catch (error) {
     console.error('Error listing guests:', error);
     throw new Error('Failed to list guests.');
   }
 };
 
-// Misafir araması için ek fonksiyon (opsiyonel)
 /**
  * Searches for guests based on a query string (e.g., name, email).
  * @param searchQuery - The string to search for.
@@ -156,12 +88,13 @@ export const listGuests = async (): Promise<Guest[]> => {
  */
 export const searchGuests = async (searchQuery: string): Promise<Guest[]> => {
   try {
-    // Firestore'da basit bir "içerir" araması yapmak için,
-    // genellikle alanları küçük harfe çevirip `startsWith` benzeri bir mantık kullanılır.
-    // Daha karmaşık aramalar için Algolia gibi üçüncü parti servisler gerekebilir.
-    // Bu örnekte, tüm misafirleri çekip istemci tarafında filtreleme yapacağız.
     // Büyük veri setleri için bu verimsiz olabilir.
+    // Daha verimli bir arama için Firestore'un kendi sorgu yeteneklerini
+    // (where, orderBy, limit) kullanmak veya Algolia gibi bir servis entegre etmek gerekir.
     const allGuests = await listGuests();
+    if (!searchQuery) {
+      return allGuests;
+    }
     const lowerCaseQuery = searchQuery.toLowerCase();
     return allGuests.filter(guest =>
       guest.firstName.toLowerCase().includes(lowerCaseQuery) ||

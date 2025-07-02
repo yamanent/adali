@@ -1,118 +1,108 @@
 // Rezervasyon servis fonksiyonları
 
-import { firestore } from "./firebase"; // Firestore mock servisi
-import { 
-  collection, 
-  query, 
-  where, 
-  orderBy, 
-  getDocs, 
-  Timestamp, 
-  addDoc, 
-  updateDoc, 
-  doc, 
-  deleteDoc, 
-  getDoc 
-} from "./firebase-service"; // Firebase modüllerini mock servisimizden içe aktarıyoruz
-import { Reservation, Room } from "./firebase-models"; // Guest model is not directly used here anymore for embedding
-import { getById, getAll, getFiltered, create, update, remove } from "./firebase-service";
-import { getGuest } from "./guest-service"; // Import guest service to fetch guest details
-
-// Koleksiyon adları
-const RESERVATIONS_COLLECTION = "reservations";
-const ROOMS_COLLECTION = "rooms";
-const GUESTS_COLLECTION = "guests";
+import {
+  reservationService,
+  roomService,
+  where,
+  orderBy,
+  Timestamp,
+  type QueryConstraint
+} from "./firebase-service";
+import type { Reservation, Room, Guest } from "./firebase-models";
+import { getGuest } from "./guest-service"; // Misafir detayları için bu hala gerekli
 
 /**
- * Tüm rezervasyonları getirir
+ * Tüm rezervasyonları getirir.
  */
 export async function getAllReservations(): Promise<Reservation[]> {
-  return await getAll<Reservation>(RESERVATIONS_COLLECTION);
+  return await reservationService.getAll();
 }
 
 /**
- * Belirli bir tarih aralığındaki rezervasyonları getirir
+ * Belirli bir tarih aralığındaki çakışan rezervasyonları getirir.
  */
 export async function getReservationsByDateRange(startDate: Date, endDate: Date): Promise<Reservation[]> {
-  const startDateStr = startDate.toISOString();
-  const endDateStr = endDate.toISOString();
-  
-  return await getFiltered<Reservation>(RESERVATIONS_COLLECTION, [
-    where("checkInDate", "<=", endDateStr),
-    where("checkOutDate", ">=", startDateStr),
+  // Firestore'da iki farklı alan üzerinde aralık (<, >) sorgusu yapılamaz.
+  // Bu yüzden önce başlangıç tarihine göre filtreleyip, sonra sonuçları kod içinde daraltıyoruz.
+  const queryConstraints: QueryConstraint[] = [
+    where("checkInDate", "<=", Timestamp.fromDate(endDate)),
     orderBy("checkInDate")
-  ]);
+  ];
+  const reservations = await reservationService.getAll(queryConstraints);
+
+  // İstemci tarafında, checkOutDate'i startDate'den büyük veya eşit olanları filtrele.
+  return reservations.filter(r => new Date(r.checkOutDate) >= startDate);
 }
 
 /**
- * Belirli bir odanın rezervasyonlarını getirir
+ * Belirli bir odanın rezervasyonlarını getirir.
  */
 export async function getReservationsByRoom(roomId: string): Promise<Reservation[]> {
-  return await getFiltered<Reservation>(RESERVATIONS_COLLECTION, [
+  return await reservationService.getAll([
     where("roomId", "==", roomId),
     orderBy("checkInDate")
   ]);
 }
 
 /**
- * Belirli bir misafirin rezervasyonlarını getirir
+ * Belirli bir misafirin rezervasyonlarını getirir.
  */
 export async function getReservationsByGuest(guestId: string): Promise<Reservation[]> {
-  return await getFiltered<Reservation>(RESERVATIONS_COLLECTION, [
+  return await reservationService.getAll([
     where("guestId", "==", guestId),
     orderBy("checkInDate", "desc")
   ]);
 }
 
 /**
- * Belirli bir duruma sahip rezervasyonları getirir
+ * Belirli bir duruma sahip rezervasyonları getirir.
  */
 export async function getReservationsByStatus(status: Reservation['status']): Promise<Reservation[]> {
-  return await getFiltered<Reservation>(RESERVATIONS_COLLECTION, [
+  return await reservationService.getAll([
     where("status", "==", status),
     orderBy("checkInDate")
   ]);
 }
 
 /**
- * Yeni bir rezervasyon oluşturur
+ * Yeni bir rezervasyon oluşturur.
  */
-export async function createReservation(reservationData: Omit<Reservation, 'id'>): Promise<string> {
-  return await create<Reservation>(RESERVATIONS_COLLECTION, reservationData);
+export async function createReservation(reservationData: Omit<Reservation, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+  return await reservationService.add(reservationData);
 }
 
 /**
- * Bir rezervasyonu günceller
+ * Bir rezervasyonu günceller.
  */
 export async function updateReservation(id: string, reservationData: Partial<Reservation>): Promise<void> {
-  await update<Reservation>(RESERVATIONS_COLLECTION, id, reservationData);
+  await reservationService.update(id, reservationData);
 }
 
 /**
- * Bir rezervasyonu siler
+ * Bir rezervasyonu siler.
  */
 export async function deleteReservation(id: string): Promise<void> {
-  await remove(RESERVATIONS_COLLECTION, id);
+  await reservationService.delete(id);
 }
 
 /**
- * Bir rezervasyonun durumunu günceller
+ * Bir rezervasyonun durumunu günceller.
  */
 export async function updateReservationStatus(id: string, status: Reservation['status']): Promise<void> {
-  await update<Reservation>(RESERVATIONS_COLLECTION, id, { status });
+  await reservationService.update(id, { status });
 }
 
 /**
- * Retrieves a specific reservation by its ID, along with the guest details.
+ * Belirli bir rezervasyonu misafir detaylarıyla birlikte getirir.
  */
 export async function getReservationWithGuestDetails(reservationId: string): Promise<{ reservation: Reservation; guest: Guest | null } | null> {
   try {
-    const reservation = await getById<Reservation>(RESERVATIONS_COLLECTION, reservationId);
+    const reservation = await reservationService.get(reservationId);
     if (!reservation) {
       return null;
     }
 
-    let guest = null;
+    let guest: Guest | null = null;
     if (reservation.guestId) {
       guest = await getGuest(reservation.guestId);
     }
@@ -124,94 +114,65 @@ export async function getReservationWithGuestDetails(reservationId: string): Pro
   }
 }
 
-
 /**
- * Bir rezervasyonun ödeme durumunu günceller
+ * Bir rezervasyonun ödeme durumunu günceller.
  */
 export async function updatePaymentStatus(id: string, paymentStatus: Reservation['paymentStatus']): Promise<void> {
-  await update<Reservation>(RESERVATIONS_COLLECTION, id, { paymentStatus });
+  await reservationService.update(id, { paymentStatus });
 }
 
 /**
- * Rezervasyon taşıma (sürükle-bırak) işlemi
+ * Rezervasyon taşıma (sürükle-bırak) işlemi.
  */
 export async function moveReservation(id: string, newRoomId: string, newCheckInDate: Date, newCheckOutDate: Date): Promise<void> {
-  await update<Reservation>(RESERVATIONS_COLLECTION, id, {
+  await reservationService.update(id, {
     roomId: newRoomId,
     checkInDate: newCheckInDate.toISOString(),
     checkOutDate: newCheckOutDate.toISOString(),
-    updatedAt: new Date().toISOString()
   });
 }
 
 /**
- * Rezervasyon istatistiklerini hesaplar
+ * Rezervasyon istatistiklerini hesaplar.
  */
 export async function getReservationStatistics() {
   const reservations = await getAllReservations();
-  
-  // Bugünün tarihi
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const todayStr = today.toISOString();
-  
-  // İstatistikler
+
   const stats = {
     total: reservations.length,
     active: 0,
     upcoming: 0,
     completed: 0,
     cancelled: 0,
-    revenue: {
-      total: 0,
-      paid: 0,
-      pending: 0
-    },
+    revenue: { total: 0, paid: 0, pending: 0 },
     occupancyRate: 0
   };
-  
-  // İstatistikleri hesapla
-  reservations.forEach(reservation => {
-    // Toplam gelir
-    stats.revenue.total += reservation.totalPrice;
-    
-    // Ödeme durumuna göre
-    if (reservation.paymentStatus === 'paid') {
-      stats.revenue.paid += reservation.totalPrice;
-    } else {
-      stats.revenue.pending += reservation.totalPrice;
+
+  reservations.forEach(r => {
+    stats.revenue.total += r.totalPrice;
+    if (r.paymentStatus === 'Ödendi') {
+      stats.revenue.paid += r.totalPrice;
+    } else if (r.paymentStatus === 'Bekliyor' || r.paymentStatus === 'Kısmi Ödeme') {
+      stats.revenue.pending += r.totalPrice;
     }
-    
-    // Rezervasyon durumuna göre
-    if (reservation.status === 'completed') {
-      stats.completed++;
-    } else if (reservation.status === 'cancelled') {
-      stats.cancelled++;
-    } else if (reservation.status === 'confirmed') {
-      const checkInDate = new Date(reservation.checkInDate);
-      const checkOutDate = new Date(reservation.checkOutDate);
-      
-      if (checkInDate <= today && checkOutDate >= today) {
-        // Aktif rezervasyon (şu anda konaklama devam ediyor)
-        stats.active++;
-      } else if (checkInDate > today) {
-        // Gelecek rezervasyon
-        stats.upcoming++;
-      }
+
+    if (r.status === 'Tamamlandı' || r.status === 'Çıkış Yaptı') stats.completed++;
+    else if (r.status === 'İptal Edildi') stats.cancelled++;
+    else if (r.status === 'Onaylandı' || r.status === 'Giriş Yaptı') {
+      const checkIn = new Date(r.checkInDate);
+      const checkOut = new Date(r.checkOutDate);
+      if (checkIn <= today && checkOut > today) stats.active++;
+      else if (checkIn > today) stats.upcoming++;
     }
   });
-  
-  // Doluluk oranını hesapla (aktif odalar / toplam odalar)
-  const rooms = await getAll<Room>(ROOMS_COLLECTION);
+
+  const rooms = await roomService.getAll();
   if (rooms.length > 0) {
-    const activeReservations = await getFiltered<Reservation>(RESERVATIONS_COLLECTION, [
-      where("checkInDate", "<=", todayStr),
-      where("checkOutDate", ">=", todayStr),
-      where("status", "==", "confirmed")
-    ]);
-    
-    stats.occupancyRate = (activeReservations.length / rooms.length) * 100;
+    // Aktif rezervasyonları (şu anda otelde olanlar) kullanarak doluluk oranını hesapla
+    stats.occupancyRate = (stats.active / rooms.length) * 100;
   }
-  
+
   return stats;
 }

@@ -1,26 +1,47 @@
-// Mock Firebase servisleri
-// Firebase paketi yüklendiğinde gerçek implementasyonla değiştirilecek
-
-// Firestore'dan import edilecek modeller
+// Gerçek Firebase servisleri
 import {
   Reservation as ReservationModel,
   Room,
   Guest as GuestModel,
   Expense as ExpenseModel
 } from './firebase-models';
+import { db } from './firebase';
+import {
+  collection,
+  doc,
+  addDoc,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  getDoc,
+  getDocs,
+  query,
+  onSnapshot,
+  Timestamp,
+  serverTimestamp,
+  writeBatch,
+  where,
+  orderBy,
+  limit,
+  startAt,
+  startAfter,
+  endAt,
+  endBefore,
+  documentId,
+  type QuerySnapshot,
+  type DocumentSnapshot,
+  type FirestoreError,
+  type QueryConstraint,
+  type WriteBatch
+} from 'firebase/firestore';
 
-// Firebase mock servislerini içe aktarıyoruz
-import { firestore, mockDatabase, saveToLocalStorage } from './firebase';
-
-// BaseModel ve Guest tiplerini tanımlıyoruz// Firestore tipi tanımlamaları
-
+// Model Arayüzleri
 export interface BaseModel {
   id: string;
-  createdAt: Date | string;
-  updatedAt: Date | string;
+  createdAt: string; // ISO string olarak tutulacak
+  updatedAt: string; // ISO string olarak tutulacak
 }
 
-// Model tanımlarını genişletelim
 export interface Reservation extends ReservationModel {}
 export interface Expense extends ExpenseModel {}
 export interface Guest extends GuestModel {
@@ -29,140 +50,37 @@ export interface Guest extends GuestModel {
   notes?: string;
 }
 
-// Mock tipler ve sınıflar
-export type QueryConstraint = any;
-export type WriteBatch = any;
-
-// Mock Timestamp sınıfı
-export const Timestamp = {
-  now: () => ({ toDate: () => new Date() }),
-  fromDate: (date: Date) => ({ toDate: () => date })
-};
-
-// Mock Firestore fonksiyonları
-export const collection = (db: any, path: string) => {
-  // db parametresi kullanılmıyor ama Firebase API uyumluluğu için gerekli
-  return path;
-};
-// Firebase API'sine uygun olarak doc fonksiyonu
-export const doc = (db: any, path: string, id?: string) => {
-  // id parametresi opsiyonel olabilir
-  if (!id) {
-    // Boş bir ID ile doküman oluştur (rastgele ID)
-    const randomId = "mock-" + Date.now();
-    return `${path}/${randomId}`;
-  }
-  return `${path}/${id}`;
-};
-export const addDoc = async (collectionRef: any, data: any) => collectionRef.add(data);
-export const setDoc = async (docRef: any, data: any, options?: any) => {
-  if (options) {
-    return docRef.set(data, options);
-  }
-  return docRef.set(data);
-};
-export const updateDoc = async (docRef: any, data: any) => docRef.update(data);
-export const deleteDoc = async (docRef: any) => docRef.delete();
-export const getDoc = async (docRef: any) => docRef.get();
-export const getDocs = async (query: any) => query.get();
-export const query = (collectionRef: any, ...queryConstraints: any[]) => {
-  // Sorgu kısıtlamalarını koleksiyon referansına ekle
-  return {
-    ...collectionRef,
-    constraints: queryConstraints,
-    get: async () => {
-      // Basit bir filtreleme mekanizması
-      const result = await collectionRef.get();
-      return result;
-    }
-  };
-};
-export const onSnapshot = (query: any, callback: (snapshot: any) => void, errorCallback?: (error: any) => void) => {
-  // Mock veri değişikliği dinleyicisi
-  query.get().then((snapshot: any) => {
-    callback(snapshot);
-  }).catch((error: any) => {
-    if (errorCallback) errorCallback(error);
-  });
-  
-  return () => {}; // Unsubscribe fonksiyonu
-};
-
-// Mock sorgu fonksiyonları
-export const where = (field?: string, operator?: string, value?: any) => ({});
-export const orderBy = (field?: string, direction?: string) => ({});
-export const limit = (limit?: number) => ({});
-export const startAt = (value?: any) => ({});
-export const startAfter = (value?: any) => ({});
-export const endAt = (value?: any) => ({});
-export const endBefore = (value?: any) => ({});
-export const documentId = () => ({});
-export const serverTimestamp = () => new Date().toISOString();
-export const writeBatch = () => ({});
-
-// Firestore koleksiyon adları için sabitler.
-// Bu, koleksiyon adlarında tutarlılık sağlar ve yazım hatalarını önler.
+// Firestore koleksiyon adları için sabitler
 export const COLLECTIONS = {
-  RESERVATIONS: 'reservations', // Rezervasyon verileri
-  ROOMS: 'rooms',               // Oda bilgileri
-  EXPENSES: 'expenses',         // Gider kayıtları
-  GUESTS: 'guests',             // Misafir bilgileri
-  USERS: 'users',               // Kullanıcı profilleri ve rolleri (Firebase Auth ile senkronize)
+  RESERVATIONS: 'reservations',
+  ROOMS: 'rooms',
+  EXPENSES: 'expenses',
+  GUESTS: 'guests',
+  USERS: 'users',
 };
 
-// --- Veri Dönüşüm Yardımcı Fonksiyonları (Data Processors) ---
-// Bu fonksiyonlar, uygulama içi veri formatları ile Firestore'un beklediği/döndürdüğü formatlar
-// (özellikle Timestamp yönetimi) arasında köprü görevi görür.
+// --- Veri Dönüşüm Yardımcıları ---
 
-/**
- * Firestore'a yazılacak verilerdeki Date objelerini veya ISO string tarihlerini Timestamp'e dönüştürür.
- * 'createdAt' ve 'updatedAt' alanlarını yönetir.
- * @param data İşlenecek veri objesi.
- * @param isNew Yeni bir doküman mı oluşturuluyor? (createdAt için)
- * @returns Firestore için işlenmiş veri objesi.
- */
 const processDataForFirestore = (data: any, isNew: boolean = false): any => {
   const processedData = { ...data };
-
-  // Modellerdeki bilinen tarih alanları (bunlar Timestamp'e çevrilecek)
-  // Bu listeyi modellerinize göre genişletin.
-  const dateFields: string[] = [
-    'checkInDate', 'checkOutDate', // Reservation
-    'date',                        // Expense
-    'birthDate',                   // Guest
-    // 'customDateField' // Diğer modellerden gelebilecek tarih alanları
-  ];
+  const dateFields: string[] = ['checkInDate', 'checkOutDate', 'date', 'birthDate'];
 
   for (const field in processedData) {
     if (processedData.hasOwnProperty(field)) {
-      // Belirlenen tarih alanlarını Timestamp'e çevir
       if (dateFields.includes(field) && processedData[field]) {
-        if (typeof processedData[field] === 'string') {
-          try {
-            const dateValue = new Date(processedData[field]);
-            if (!isNaN(dateValue.getTime())) {
-              processedData[field] = Timestamp.fromDate(dateValue);
-            } else {
-              console.warn(`processDataForFirestore: Geçersiz tarih string formatı - Alan: ${field}, Değer: ${processedData[field]}`);
-            }
-          } catch (e) {
-            console.warn(`processDataForFirestore: Tarih parse edilirken hata - Alan: ${field}, Değer: ${processedData[field]}`, e);
-          }
-        } else if (Object.prototype.toString.call(processedData[field]) === '[object Date]') {
-          processedData[field] = Timestamp.fromDate(processedData[field]);
+        const dateValue = new Date(processedData[field]);
+        if (!isNaN(dateValue.getTime())) {
+          processedData[field] = Timestamp.fromDate(dateValue);
         }
-        // Eğer zaten Timestamp ise dokunma
       }
     }
   }
 
-  // Otomatik zaman damgaları
   if (isNew) {
     processedData.createdAt = serverTimestamp();
   }
   processedData.updatedAt = serverTimestamp();
 
-  // Firestore'a 'undefined' değerler gönderilmemeli, bu hatalara yol açabilir.
   for (const key in processedData) {
     if (processedData[key] === undefined) {
       delete processedData[key];
@@ -172,76 +90,40 @@ const processDataForFirestore = (data: any, isNew: boolean = false): any => {
   return processedData;
 };
 
-/**
- * Firestore'dan okunan verilerdeki Timestamp'leri ISO string'e dönüştürür.
- * @param data Firestore'dan gelen veri.
- * @returns Timestamp'leri ISO string'e dönüştürülmüş veri.
- */
 const processDataFromFirestore = <T>(data: any): T => {
   if (!data) return data;
-  
-  // Tarih alanlarını dönüştür
   const processedData = { ...data };
-  
-  // Tüm alanları kontrol et
+
   for (const key in processedData) {
     const value = processedData[key];
-    
-    // Timestamp nesnesi mi kontrolü
-    if (value && typeof value === 'object' && value.toDate && typeof value.toDate === 'function') {
+    if (value && typeof value.toDate === 'function') {
       processedData[key] = value.toDate().toISOString();
-    } 
-    // localStorage'dan yüklenen tarih nesneleri için özel işlem
-    else if (value && typeof value === 'object' && value.seconds !== undefined && value.nanoseconds !== undefined) {
-      // Bu bir timestamp nesnesi ama toDate() fonksiyonu yok (localStorage'dan gelmiş)
-      const milliseconds = value.seconds * 1000 + value.nanoseconds / 1000000;
-      processedData[key] = new Date(milliseconds).toISOString();
-    }
-    else if (value && typeof value === 'object' && !Array.isArray(value)) {
-      // İç içe nesneleri işle
+    } else if (value && typeof value === 'object' && !Array.isArray(value)) {
       processedData[key] = processDataFromFirestore(value);
     }
   }
-  
+
   return processedData as T;
 };
 
 // --- Genel Firestore CRUD Fonksiyonları ---
-// Bu fonksiyonlar, herhangi bir koleksiyon için temel Firestore işlemlerini (CRUD) soyutlar.
-// Tip güvenliği (generics) ve merkezi hata yönetimi sağlarlar.
 
-/**
- * Bir koleksiyona yeni bir doküman ekler.
- * Otomatik olarak `createdAt` ve `updatedAt` (serverTimestamp) alanlarını yönetir.
- * Tarih alanlarını `Timestamp` formatına dönüştürür.
- * @param collectionPath Hedef koleksiyonun adı (örn: COLLECTIONS.RESERVATIONS).
- * @param data Eklenecek veri (modellerdeki `id` hariç).
- * @returns Eklenen dokümanın Firestore tarafından üretilen ID'si.
- */
 export const addDocument = async <TData extends object>(
   collectionPath: string,
-  data: TData // Genellikle Omit<Model, 'id' | 'createdAt' | 'updatedAt'> şeklinde kullanılır
+  data: TData
 ): Promise<string> => {
   try {
-    // `processDataForFirestore(data, true)`: `true` parametresi yeni doküman olduğunu belirtir,
-    // böylece `createdAt` ve `updatedAt` `serverTimestamp` olarak ayarlanır.
-    const docRef = await addDoc(collection(firestore, collectionPath), processDataForFirestore(data, true));
+    const docRef = await addDoc(
+      collection(db, collectionPath),
+      processDataForFirestore(data, true)
+    );
     return docRef.id;
   } catch (error) {
     console.error(`FirestoreService: addDocument [${collectionPath}] hata:`, error);
-    throw error; // Hatanın yukarıya yayılması için
+    throw error;
   }
 };
 
-/**
- * Belirli bir ID ile bir doküman oluşturur veya var olanı günceller/birleştirir.
- * `processDataForFirestore` ile tarihleri ve `updatedAt` alanını yönetir.
- * `createdAt` alanı, `merge` false ise ve doküman yeni oluşturuluyorsa `processDataForFirestore` içinde `serverTimestamp` ile yönetilir.
- * @param collectionPath Hedef koleksiyonun adı.
- * @param id Doküman ID'si.
- * @param data Kaydedilecek veri.
- * @param merge Varsayılan true. False ise dokümanı tamamen verilen veriyle değiştirir.
- */
 export const setDocument = async <TData extends object>(
   collectionPath: string,
   id: string,
@@ -249,311 +131,114 @@ export const setDocument = async <TData extends object>(
   merge: boolean = true
 ): Promise<void> => {
   try {
-    // Eğer yeni bir doküman oluşturuluyorsa (merge false ve doküman yoksa gibi durumlar)
-    // createdAt'in yönetimi için ek bir kontrol gerekebilir.
-    // Şimdilik processDataForFirestore'un ikinci argümanını (isNew) yönetmiyoruz,
-    // bu da createdAt'in sadece addDocument ile otomatik ekleneceği anlamına gelir.
-    // `!merge` (yani merge false ise) yeni bir doküman oluşturulduğunu varsayarak `isNew=true` gönderir.
-    // Bu, `createdAt` alanının `serverTimestamp` ile ayarlanmasını sağlar.
-    // Eğer `merge=true` ise, varolan bir doküman güncelleniyor (`isNew=false`), sadece `updatedAt` güncellenir.
-    
-    // Doküman yolunu oluşturuyoruz
-    const docPath = `${collectionPath}/${id}`;
-    const processedData = processDataForFirestore(data, !merge);
-    
-    // setDoc fonksiyonunu çağırıyoruz
-    await setDoc(docPath, processedData, { merge });
+    const docRef = doc(db, collectionPath, id);
+    await setDoc(docRef, processDataForFirestore(data, !merge), { merge });
   } catch (error) {
     console.error(`FirestoreService: setDocument [${collectionPath}/${id}] hata:`, error);
     throw error;
   }
 };
 
-/**
- * Varolan bir dokümanı kısmi olarak günceller.
- * Sadece belirtilen alanları günceller, diğerlerini olduğu gibi bırakır.
- * `updatedAt` alanını otomatik olarak `serverTimestamp` ile günceller.
- * @param collectionPath Hedef koleksiyonun adı.
- * @param id Güncellenecek dokümanın ID'si.
- * @param data Güncellenecek veri (modelin kısmi bir objesi).
- */
 export const updateDocument = async <TData extends object>(
   collectionPath: string,
   id: string,
-  data: Partial<TData> // Partial<Model> tipinde veri alır
+  data: Partial<TData>
 ): Promise<void> => {
   try {
-    // `processDataForFirestore(data)` (isNew=false varsayılan) sadece `updatedAt`'i yönetir.
-    const docPath = `${collectionPath}/${id}`;
-    await updateDoc(docPath, processDataForFirestore(data));
+    const docRef = doc(db, collectionPath, id);
+    await updateDoc(docRef, processDataForFirestore(data));
   } catch (error) {
     console.error(`FirestoreService: updateDocument [${collectionPath}/${id}] hata:`, error);
     throw error;
   }
 };
 
-/**
- * Bir dokümanı Firestore'dan siler.
- * @param collectionPath Hedef koleksiyonun adı.
- * @param id Silinecek dokümanın ID'si.
- */
 export const deleteDocument = async (collectionPath: string, id: string): Promise<void> => {
   try {
-    const docPath = `${collectionPath}/${id}`;
-    await deleteDoc(docPath);
+    const docRef = doc(db, collectionPath, id);
+    await deleteDoc(docRef);
   } catch (error) {
     console.error(`FirestoreService: deleteDocument [${collectionPath}/${id}] hata:`, error);
     throw error;
   }
 };
 
-/**
- * Belirli bir ID'ye sahip dokümanı Firestore'dan getirir.
- * Tarih alanları `processDataFromFirestore` ile ISO string formatına dönüştürülür.
- * @param collectionPath Hedef koleksiyonun adı.
- * @param id Getirilecek dokümanın ID'si.
- * @returns Doküman verisi (model tipinde, `id` alanı dahil) veya doküman bulunamazsa `null`.
- */
 export const getDocument = async <TModel>(collectionPath: string, id: string): Promise<TModel | null> => {
   try {
-    const docPath = `${collectionPath}/${id}`;
-    const docSnap: any = await getDoc(docPath);
+    const docRef = doc(db, collectionPath, id);
+    const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
-      // Doküman verisine ID'sini ekleyerek döndürür.
       return processDataFromFirestore<TModel>({ id: docSnap.id, ...docSnap.data() } as TModel);
     }
-    console.log(`FirestoreService: Document ${id} not found in ${collectionPath}`);
     return null;
-  } catch (error: any) {
+  } catch (error) {
     console.error(`FirestoreService: getDocument [${collectionPath}/${id}] hata:`, error);
     throw error;
   }
 };
 
-/**
- * Bir koleksiyondaki dokümanları getirir. Sorgu ve sıralama kriterleri uygulanabilir.
- * Tarih alanları `processDataFromFirestore` ile ISO string formatına dönüştürülür.
- * @param collectionPath Hedef koleksiyonun adı.
- * @param queryConstraints Firestore sorgu kısıtlamaları dizisi (örn: [where(...), orderBy(...)])
- * @returns Dokümanların listesi (model tipinde, her biri `id` alanı içerir).
- */
 export const getCollection = async <TModel>(
   collectionPath: string,
-  queryConstraints: any[] = [] // Varsayılan olarak boş dizi, tüm koleksiyonu getirir.
+  queryConstraints: QueryConstraint[] = []
 ): Promise<TModel[]> => {
   try {
-    const q = query(collectionPath, ...queryConstraints);
-    const querySnapshot: any = await getDocs(q);
-    return querySnapshot.docs.map((docSnap: any) =>
+    const collRef = collection(db, collectionPath);
+    const q = query(collRef, ...queryConstraints);
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map((docSnap: DocumentSnapshot) =>
       processDataFromFirestore<TModel>({ id: docSnap.id, ...docSnap.data() } as TModel)
     );
-  } catch (error: any) {
+  } catch (error) {
     console.error(`FirestoreService: getCollection [${collectionPath}] hata:`, error);
     throw error;
   }
 };
 
-/**
- * Bir koleksiyonu dinleyerek anlık güncellemeleri alır (realtime).
- * Verilerde herhangi bir değişiklik olduğunda (ekleme, güncelleme, silme) callback fonksiyonunu tetikler.
- * Tarih alanları `processDataFromFirestore` ile ISO string formatına dönüştürülür.
- * @param collectionPath Dinlenecek koleksiyonun adı.
- * @param callback Veri güncellendiğinde çağrılacak fonksiyon. Güncel veri listesini alır.
- * @param queryConstraints Firestore sorgu kısıtlamaları.
- * @returns Firestore listener'ını sonlandırmak için çağrılabilecek bir `unsubscribe` fonksiyonu.
- */
-// Temel model tipi tanımı - üstteki export edilmiş tanımı kullanıyoruz
-
 export const getCollectionWithRealtimeUpdates = <TModel>(
   collectionPath: string,
   callback: (data: TModel[]) => void,
-  queryConstraints: any[] = []
+  queryConstraints: QueryConstraint[] = []
 ): (() => void) => {
-  const q = query(collectionPath, ...queryConstraints);
-  // onSnapshot fonksiyonunu sadece callback ile çağırıyoruz
-  // hata durumunu konsola yazdırıyoruz
-  const unsubscribe = onSnapshot(q, (querySnapshot: any) => {
-    const dataList = querySnapshot.docs.map((docSnap: any) =>
+  const collRef = collection(db, collectionPath);
+  const q = query(collRef, ...queryConstraints);
+  const unsubscribe = onSnapshot(q, (querySnapshot: QuerySnapshot) => {
+    const dataList = querySnapshot.docs.map((docSnap: DocumentSnapshot) =>
       processDataFromFirestore<TModel>({ id: docSnap.id, ...docSnap.data() } as TModel)
     );
-    callback(dataList); // Güncel veriyi callback ile dışarıya bildir.
+    callback(dataList);
+  }, (error: FirestoreError) => {
+    console.error(`FirestoreService: onSnapshot [${collectionPath}] hata:`, error);
   });
-  // Unsubscribe fonksiyonunu döndürüyoruz
-  return () => {
-    if (unsubscribe) {
-      unsubscribe();
-    }
-  };
+  return unsubscribe;
 };
 
-// Genel CRUD fonksiyonları
-
-/**
- * Bir koleksiyondaki tüm belgeleri getirir
- * @param collectionPath Koleksiyon yolu
- * @returns Belge listesi
- */
-export const getAll = async <TModel extends BaseModel>(collectionPath: string): Promise<TModel[]> => {
-  try {
-    const q = query(collectionPath);
-    const querySnapshot = await getDocs(q);
-    
-    // Eğer docs dizisi varsa ve her belge get metoduna sahipse, standart yöntemi kullan
-    if (querySnapshot.docs && typeof querySnapshot.docs.map === 'function') {
-      return querySnapshot.docs.map((doc: any) => {
-        const data = doc.data ? doc.data() : doc;
-        return processDataFromFirestore<TModel>({ id: doc.id, ...data } as TModel);
-      });
-    } 
-    // Eğer querySnapshot bir dizi ise (mock Firebase durumunda)
-    else if (Array.isArray(querySnapshot)) {
-      return querySnapshot.map((doc: any) => {
-        const data = doc.data ? doc.data() : doc;
-        return processDataFromFirestore<TModel>({ id: doc.id, ...data } as TModel);
-      });
-    }
-    // Diğer durumlarda boş dizi döndür
-    return [];
-  } catch (error) {
-    console.error(`FirestoreService: getAll [${collectionPath}] hata:`, error);
-    throw error;
-  }
+// Firestore fonksiyonlarını yeniden dışa aktararak diğer dosyalarda kullanılabilir hale getirme
+export {
+  doc,
+  query,
+  where,
+  orderBy,
+  limit,
+  startAt,
+  startAfter,
+  endAt,
+  endBefore,
+  documentId,
+  writeBatch,
+  Timestamp,
+  serverTimestamp,
+  type QueryConstraint,
+  type WriteBatch
 };
 
-/**
- * Belirli bir belgeyi ID'ye göre getirir
- * @param collectionPath Koleksiyon yolu
- * @param id Belge ID'si
- * @returns Belge veya null
- */
-export const getById = async <TModel extends BaseModel>(collectionPath: string, id: string): Promise<TModel | null> => {
-  try {
-    const docPath = `${collectionPath}/${id}`;
-    const docSnap = await getDoc(docPath);
-    if (docSnap.exists()) {
-      return processDataFromFirestore<TModel>({ id: docSnap.id, ...docSnap.data() } as TModel);
-    }
-    return null;
-  } catch (error) {
-    console.error(`FirestoreService: getById [${collectionPath}/${id}] hata:`, error);
-    throw error;
-  }
-};
 
-/**
- * Filtrelenmiş belgeleri getirir
- * @param collectionPath Koleksiyon yolu
- * @param queryConstraints Sorgu kısıtlamaları
- * @returns Filtrelenmiş belge listesi
- */
-export const getFiltered = async <TModel extends BaseModel>(
-  collectionPath: string,
-  queryConstraints: QueryConstraint[] = []
-): Promise<TModel[]> => {
-  try {
-    const q = query(collectionPath, ...queryConstraints);
-    const querySnapshot = await getDocs(q);
-    
-    // Eğer docs dizisi varsa ve her belge get metoduna sahipse, standart yöntemi kullan
-    if (querySnapshot.docs && typeof querySnapshot.docs.map === 'function') {
-      return querySnapshot.docs.map((doc: any) => {
-        const data = doc.data ? doc.data() : doc;
-        return processDataFromFirestore<TModel>({ id: doc.id, ...data } as TModel);
-      });
-    } 
-    // Eğer querySnapshot bir dizi ise (mock Firebase durumunda)
-    else if (Array.isArray(querySnapshot)) {
-      return querySnapshot.map((doc: any) => {
-        const data = doc.data ? doc.data() : doc;
-        return processDataFromFirestore<TModel>({ id: doc.id, ...data } as TModel);
-      });
-    }
-    // Diğer durumlarda boş dizi döndür
-    return [];
-  } catch (error) {
-    console.error(`FirestoreService: getFiltered [${collectionPath}] hata:`, error);
-    throw error;
-  }
-};
-
-/**
- * Yeni bir belge oluşturur
- * @param collectionPath Koleksiyon yolu
- * @param data Belge verisi
- * @returns Oluşturulan belgenin ID'si
- */
-export const create = async <TData extends object>(collectionPath: string, data: TData): Promise<string> => {
-  try {
-    const processedData = processDataForFirestore(data, true);
-    const docRef = await addDoc(collection(firestore, collectionPath), {
-      ...processedData,
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
-    });
-    return docRef.id;
-  } catch (error) {
-    console.error(`FirestoreService: create [${collectionPath}] hata:`, error);
-    throw error;
-  }
-};
-
-/**
- * Bir belgeyi günceller
- * @param collectionPath Koleksiyon yolu
- * @param id Belge ID'si
- * @param data Güncellenecek veri
- * @returns Promise
- */
-export const update = async <TData extends object>(collectionPath: string, id: string, data: Partial<TData>): Promise<void> => {
-  try {
-    const docRef = doc(firestore, collectionPath, id);
-    const processedData = processDataForFirestore(data, false);
-    await updateDoc(docRef, {
-      ...processedData,
-      updatedAt: Timestamp.now(),
-    });
-  } catch (error) {
-    console.error(`FirestoreService: update [${collectionPath}/${id}] hata:`, error);
-    throw error;
-  }
-};
-
-/**
- * Bir belgeyi siler
- * @param collectionPath Koleksiyon yolu
- * @param id Belge ID'si
- * @returns Promise
- */
-export const remove = async (collectionPath: string, id: string): Promise<void> => {
-  try {
-    const docRef = doc(firestore, collectionPath, id);
-    await deleteDoc(docRef);
-  } catch (error) {
-    console.error(`FirestoreService: remove [${collectionPath}/${id}] hata:`, error);
-    throw error;
-  }
-};
-
-// ... (diğer kodlar)
-// dışarıdan verilmemesini sağlar, çünkü bunlar servis tarafından yönetilir.
-
-// Yeni veri tipi, id alanını hariç tutar ve createdAt/updatedAt alanlarını opsiyonel yapar
-export type NewData<T> = Omit<T, 'id'> & {
-  createdAt?: string | Date;
-  updatedAt?: string | Date;
-};
+// Yeni veri tipi, bir döküman oluşturulurken sistem tarafından atanacak olan
+// id, createdAt ve updatedAt alanlarını hariç tutar.
+export type NewData<T> = Omit<T, 'id' | 'createdAt' | 'updatedAt'>;
 
 // Rezervasyonlar için CRUD servisleri
 export const reservationService = {
-  add: (data: NewData<Reservation>) => {
-    // createdAt alanını garanti edelim
-    const dataWithDefaults = {
-      ...data,
-      createdAt: data.createdAt || new Date().toISOString(),
-      updatedAt: data.updatedAt || new Date().toISOString()
-    };
-    return addDocument<NewData<Reservation>>(COLLECTIONS.RESERVATIONS, dataWithDefaults);
-  },
+  add: (data: NewData<Reservation>) => addDocument(COLLECTIONS.RESERVATIONS, data),
   set: (id: string, data: Reservation, merge: boolean = true) => {
     // createdAt alanını garanti edelim
     const dataWithDefaults = {
@@ -585,15 +270,7 @@ export const roomService = {
 
 // Giderler için CRUD servisleri
 export const expenseService = {
-  add: (data: NewData<Expense>) => {
-    // createdAt alanını garanti edelim
-    const dataWithDefaults = {
-      ...data,
-      createdAt: data.createdAt || new Date().toISOString(),
-      updatedAt: data.updatedAt || new Date().toISOString()
-    };
-    return addDocument<NewData<Expense>>(COLLECTIONS.EXPENSES, dataWithDefaults);
-  },
+  add: (data: NewData<Expense>) => addDocument(COLLECTIONS.EXPENSES, data),
   set: (id: string, data: Expense, merge: boolean = true) => {
     // createdAt alanını garanti edelim
     const dataWithDefaults = {
@@ -613,7 +290,7 @@ export const expenseService = {
 
 // Misafirler için CRUD servisleri
 export const guestService = {
-  add: (data: NewData<Guest>) => addDocument<NewData<Guest>>(COLLECTIONS.GUESTS, data),
+  add: (data: NewData<Guest>) => addDocument(COLLECTIONS.GUESTS, data),
   set: (id: string, data: Guest, merge: boolean = true) => setDocument<Guest>(COLLECTIONS.GUESTS, id, data, merge),
   update: (id: string, data: Partial<Guest>) => updateDocument<Guest>(COLLECTIONS.GUESTS, id, data),
   delete: (id: string) => deleteDocument(COLLECTIONS.GUESTS, id),
