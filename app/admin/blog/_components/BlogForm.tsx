@@ -3,14 +3,17 @@
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { useState, useRef } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { BlogPost } from '@/lib/blog-models';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/context/auth-context';
+import { storage } from '@/lib/firebase/firebase-config';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { toast } from 'sonner';
 
 const formSchema = z.object({
@@ -52,9 +55,13 @@ interface BlogFormProps {
   isSubmitting: boolean;
 }
 
-export function BlogForm({ onSubmit, initialData, isSubmitting }: BlogFormProps) {
+export default function BlogForm({ onSubmit, initialData, isSubmitting }: BlogFormProps) {
   const { user } = useAuth();
-  const { register, handleSubmit, formState: { errors }, control, setValue } = useForm<BlogFormValues>({ 
+  const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [uploadProgress, setUploadProgress] = useState<{cover: number, main: number}>({cover: 0, main: 0});
+  const coverImageInputRef = useRef<HTMLInputElement>(null);
+  const mainImageInputRef = useRef<HTMLInputElement>(null);
+  const { register, handleSubmit, formState: { errors }, control, setValue, watch } = useForm<BlogFormValues>({ 
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: initialData?.title || '',
@@ -71,6 +78,65 @@ export function BlogForm({ onSubmit, initialData, isSubmitting }: BlogFormProps)
       published: initialData?.published || false,
     },
   });
+
+  // Görsel yükleme işlemi
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'cover' | 'main') => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsUploading(true);
+      
+      // Firebase Storage'a yükleme
+      const storageRef = ref(storage, `blog-images/${Date.now()}_${file.name}`);
+      
+      // Yükleme işlemi
+      const uploadTask = uploadBytes(storageRef, file);
+      
+      // Yükleme ilerlemesini takip et (Firebase v9'da doğrudan ilerleme takibi yok, simüle ediyoruz)
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += 10;
+        if (progress <= 90) {
+          setUploadProgress(prev => ({
+            ...prev,
+            [type]: progress
+          }));
+        }
+      }, 200);
+      
+      // Yükleme tamamlandığında
+      await uploadTask;
+      clearInterval(interval);
+      setUploadProgress(prev => ({
+        ...prev,
+        [type]: 100
+      }));
+      
+      // URL'i al
+      const downloadURL = await getDownloadURL(storageRef);
+      
+      // Form değerini güncelle
+      if (type === 'cover') {
+        setValue('coverImageUrl', downloadURL);
+      } else {
+        setValue('imageUrl', downloadURL);
+      }
+      
+      // Temizle
+      setTimeout(() => {
+        setUploadProgress(prev => ({
+          ...prev,
+          [type]: 0
+        }));
+        setIsUploading(false);
+      }, 1000);
+      
+    } catch (error) {
+      console.error('Görsel yükleme hatası:', error);
+      setIsUploading(false);
+    }
+  };
 
   const handleFormSubmit = (data: BlogFormValues) => {
     if (!user?.displayName) {
@@ -155,16 +221,88 @@ export function BlogForm({ onSubmit, initialData, isSubmitting }: BlogFormProps)
             
             <div className="space-y-2">
               <Label htmlFor="coverImageUrl">Kapak Görseli URL</Label>
-              <Input id="coverImageUrl" {...register('coverImageUrl')} placeholder="https://example.com/cover.jpg" />
+              <div className="flex gap-2">
+                <Input id="coverImageUrl" {...register('coverImageUrl')} placeholder="https://example.com/cover.jpg" className="flex-1" />
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="shrink-0" 
+                  onClick={() => coverImageInputRef.current?.click()}
+                  disabled={isUploading}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7"></path><rect x="16" y="2" width="6" height="6" rx="1"></rect><path d="m22 13-4-4-4 4"></path><path d="M18 13v9"></path></svg>
+                  {isUploading && uploadProgress.cover > 0 ? `${uploadProgress.cover}%` : 'Yükle'}
+                </Button>
+              </div>
+              <div className="flex items-center gap-2">
+                <Input 
+                  type="file" 
+                  id="coverImageUpload" 
+                  className="hidden" 
+                  accept="image/*" 
+                  ref={coverImageInputRef}
+                  onChange={(e) => handleImageUpload(e, 'cover')} 
+                />
+                <Label 
+                  htmlFor="coverImageUpload" 
+                  className="cursor-pointer text-xs text-blue-600 hover:underline"
+                  onClick={() => coverImageInputRef.current?.click()}
+                >
+                  Bilgisayardan seç
+                </Label>
+                <p className="text-xs text-gray-500">veya URL girin</p>
+              </div>
               <p className="text-xs text-gray-500">Blog listesinde görünecek büyük kapak görseli</p>
               {errors.coverImageUrl && <p className="text-sm text-red-500">{errors.coverImageUrl.message}</p>}
+              {watch('coverImageUrl') && (
+                <div className="mt-2 border rounded-md p-2">
+                  <p className="text-xs font-medium mb-1">Önizleme:</p>
+                  <img src={watch('coverImageUrl')} alt="Kapak görseli önizleme" className="max-h-40 object-cover rounded" />
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="imageUrl">Ana İçerik Görseli URL</Label>
-              <Input id="imageUrl" {...register('imageUrl')} placeholder="https://example.com/image.jpg" />
+              <div className="flex gap-2">
+                <Input id="imageUrl" {...register('imageUrl')} placeholder="https://example.com/image.jpg" className="flex-1" />
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="shrink-0" 
+                  onClick={() => mainImageInputRef.current?.click()}
+                  disabled={isUploading}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7"></path><rect x="16" y="2" width="6" height="6" rx="1"></rect><path d="m22 13-4-4-4 4"></path><path d="M18 13v9"></path></svg>
+                  {isUploading && uploadProgress.main > 0 ? `${uploadProgress.main}%` : 'Yükle'}
+                </Button>
+              </div>
+              <div className="flex items-center gap-2">
+                <Input 
+                  type="file" 
+                  id="mainImageUpload" 
+                  className="hidden" 
+                  accept="image/*" 
+                  ref={mainImageInputRef}
+                  onChange={(e) => handleImageUpload(e, 'main')} 
+                />
+                <Label 
+                  htmlFor="mainImageUpload" 
+                  className="cursor-pointer text-xs text-blue-600 hover:underline"
+                  onClick={() => mainImageInputRef.current?.click()}
+                >
+                  Bilgisayardan seç
+                </Label>
+                <p className="text-xs text-gray-500">veya URL girin</p>
+              </div>
               <p className="text-xs text-gray-500">Blog detay sayfasında görünecek ana görsel</p>
               {errors.imageUrl && <p className="text-sm text-red-500">{errors.imageUrl.message}</p>}
+              {watch('imageUrl') && (
+                <div className="mt-2 border rounded-md p-2">
+                  <p className="text-xs font-medium mb-1">Önizleme:</p>
+                  <img src={watch('imageUrl')} alt="Ana görsel önizleme" className="max-h-40 object-cover rounded" />
+                </div>
+              )}
             </div>
           </div>
 
