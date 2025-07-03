@@ -55,7 +55,7 @@ export default function ReservationForm({ reservation, onSave, onCancel }: Reser
   const fetchRoomsAndGuests = useCallback(async () => {
     try {
       const roomData = await getAllRooms(); // roomService'den odaları al
-      setRooms(roomData.map(r => ({ id: r.id, name: r.name || 'İsimsiz Oda', type: r.type })));
+      setRooms(roomData.map(r => ({ id: r.id, name: r.roomNumber || 'İsimsiz Oda', type: r.type })));
 
       const guestData = await listGuests();
       setAllGuests(guestData);

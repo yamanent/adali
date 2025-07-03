@@ -9,16 +9,16 @@ export default function MobileQuickAccess() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isEnglish, setIsEnglish] = useState(false);
   const pathname = usePathname();
-  
-  // Admin sayfalarında mobile quick access gösterme
-  if (pathname.startsWith('/admin')) {
-    return null;
-  }
 
   useEffect(() => {
     // Mevcut dilin İngilizce olup olmadığını kontrol et
     setIsEnglish(pathname.startsWith('/en'));
   }, [pathname]);
+
+  // Admin sayfalarında mobile quick access gösterme
+  if (pathname.startsWith('/admin')) {
+    return null;
+  }
 
   // Dil değiştirme fonksiyonu
   const toggleLanguage = () => {

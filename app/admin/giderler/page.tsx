@@ -31,16 +31,16 @@ export default function ExpensesPage() {
   });
 
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { user } = useAuth();
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!user) {
       router.push("/admin");
       return;
     }
 
     loadExpenses();
-  }, [router, isAuthenticated]);
+  }, [router, user]);
 
   const loadExpenses = () => {
     try {
@@ -158,8 +158,8 @@ export default function ExpensesPage() {
 
   return (
     <RoleGate
-      allowedRoles={[UserRole.ADMIN, UserRole.MANAGER]}
-      fallback={<Unauthorized message="Giderler sayfasına erişim için yönetici veya admin yetkisi gereklidir." />}
+      allowedRoles={[UserRole.ADMIN]}
+      fallback={<Unauthorized message="Giderler sayfasına erişim için admin yetkisi gereklidir." />}
     >
       <PermissionGate
         permissionNeeded="manage:expenses"
