@@ -1,84 +1,87 @@
-// Rezervasyon servis fonksiyonları
-
 import {
-  reservationService,
-  roomService,
+  collection,
+  query,
+  onSnapshot,
+  getDocs,
+  doc,
+  getDoc,
+  addDoc,
+  updateDoc,
+  deleteDoc,
   where,
-  orderBy,
   Timestamp,
-  type QueryConstraint
-} from "./firebase-service";
-import type { Reservation, Room, Guest } from "./firebase-models";
-import { getGuest } from "./guest-service"; // Misafir detayları için bu hala gerekli
+  orderBy,
+  QueryConstraint,
+} from "firebase/firestore";
+import { db } from "./firebase";
+import { Reservation, Guest, Room } from "./firebase-models";
+import { getGuest } from "./guest-service";
+import * as roomService from "./room-service";
 import { createLog } from './log-service';
 
+// Helper to convert Firestore doc to Reservation
+const docToReservation = (doc: any): Reservation => {
+    const data = doc.data();
+    return {
+        id: doc.id,
+        ...data,
+        // Convert Timestamps to ISO strings for consistency
+        checkInDate: data.checkInDate instanceof Timestamp ? data.checkInDate.toDate().toISOString() : data.checkInDate,
+        checkOutDate: data.checkOutDate instanceof Timestamp ? data.checkOutDate.toDate().toISOString() : data.checkOutDate,
+        createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : data.createdAt,
+        updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toDate().toISOString() : data.updatedAt,
+    } as Reservation;
+};
+
 /**
- * Tüm rezervasyonları getirir.
+ * Tüm rezervasyonları bir kereliğine getirir.
  */
+export async function getAllReservations(): Promise<Reservation[]> {
+    const reservationsCol = collection(db, 'reservations');
+    const q = query(reservationsCol, orderBy("checkInDate", "desc"));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(docToReservation);
+}
+
 /**
  * Tüm rezervasyonları gerçek zamanlı olarak dinler.
  * @param onUpdate - Rezervasyonlar güncellendiğinde çağrılacak callback.
  * @param onError - Hata durumunda çağrılacak callback.
  * @returns Dinlemeyi durdurmak için bir unsubscribe fonksiyonu.
  */
-export function getAllReservations(
+export function listenToReservations(
   onUpdate: (reservations: Reservation[]) => void,
   onError: (error: Error) => void
 ): () => void {
-  // FirebaseService'in listen metodunu kullanarak gerçek zamanlı dinleyici oluşturuyoruz.
-  // Bu metodun, koleksiyondaki değişiklikleri dinleyip, veriyi onUpdate callback'ine, 
-  // hataları ise onError callback'ine ilettiğini varsayıyoruz.
-  return reservationService.listen(
-    (data) => onUpdate(data as Reservation[]),
-    onError
-  );
+  const reservationsCol = collection(db, 'reservations');
+  const q = query(reservationsCol, orderBy("checkInDate", "desc"));
+
+  const unsubscribe = onSnapshot(q, (querySnapshot) => {
+    const reservations = querySnapshot.docs.map(docToReservation);
+    onUpdate(reservations);
+  }, (error) => {
+    console.error("Error listening to reservations: ", error);
+    onError(error);
+  });
+
+  return unsubscribe;
 }
+
 
 /**
- * Belirli bir tarih aralığındaki çakışan rezervasyonları getirir.
+ * Belirli bir rezervasyonu ID ile getirir.
  */
-export async function getReservationsByDateRange(startDate: Date, endDate: Date): Promise<Reservation[]> {
-  // Firestore'da iki farklı alan üzerinde aralık (<, >) sorgusu yapılamaz.
-  // Bu yüzden önce başlangıç tarihine göre filtreleyip, sonra sonuçları kod içinde daraltıyoruz.
-  const queryConstraints: QueryConstraint[] = [
-    where("checkInDate", "<=", Timestamp.fromDate(endDate)),
-    orderBy("checkInDate")
-  ];
-  const reservations = await reservationService.getAll(queryConstraints);
-
-  // İstemci tarafında, checkOutDate'i startDate'den büyük veya eşit olanları filtrele.
-  return reservations.filter(r => new Date(r.checkOutDate) >= startDate);
+export async function getReservationById(id: string): Promise<Reservation | null> {
+    const docRef = doc(db, "reservations", id);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+        return docToReservation(docSnap);
+    } else {
+        console.log("No such reservation!");
+        return null;
+    }
 }
 
-/**
- * Belirli bir odanın rezervasyonlarını getirir.
- */
-export async function getReservationsByRoom(roomId: string): Promise<Reservation[]> {
-  return await reservationService.getAll([
-    where("roomId", "==", roomId),
-    orderBy("checkInDate")
-  ]);
-}
-
-/**
- * Belirli bir misafirin rezervasyonlarını getirir.
- */
-export async function getReservationsByGuest(guestId: string): Promise<Reservation[]> {
-  return await reservationService.getAll([
-    where("guestId", "==", guestId),
-    orderBy("checkInDate", "desc")
-  ]);
-}
-
-/**
- * Belirli bir duruma sahip rezervasyonları getirir.
- */
-export async function getReservationsByStatus(status: Reservation['status']): Promise<Reservation[]> {
-  return await reservationService.getAll([
-    where("status", "==", status),
-    orderBy("checkInDate")
-  ]);
-}
 
 /**
  * Yeni bir rezervasyon oluşturur.
@@ -87,152 +90,121 @@ export async function createReservation(
   reservationData: Omit<Reservation, 'id' | 'createdAt' | 'updatedAt'>,
   user: { id: string; email: string | null }
 ): Promise<string> {
-  const newReservationId = await reservationService.add(reservationData);
+    const reservationsCol = collection(db, 'reservations');
+    const docRef = await addDoc(reservationsCol, {
+        ...reservationData,
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+    });
 
-  // Odanın durumunu 'dolu' olarak güncelle
-  await roomService.update(reservationData.roomId, { status: 'Dolu' });
+    // Odanın durumunu 'dolu' olarak güncelle
+    await roomService.updateRoom(reservationData.roomId, { status: 'Dolu' });
 
-  // Log kaydı oluştur
-  await createLog(
-    'info',
-    `Yeni rezervasyon oluşturuldu (ID: ${newReservationId})`,
-    {
-      guestId: reservationData.guestId,
-      roomId: reservationData.roomId,
-      checkIn: reservationData.checkInDate,
-      checkOut: reservationData.checkOutDate,
-      totalPrice: reservationData.totalPrice,
-    },
-    { uid: user.id, email: user.email }
-  );
+    // Log kaydı oluştur
+    await createLog(
+        'info',
+        `Yeni rezervasyon oluşturuldu (ID: ${docRef.id})`,
+        {
+            guestId: reservationData.guestId,
+            roomId: reservationData.roomId,
+            checkIn: reservationData.checkInDate,
+            checkOut: reservationData.checkOutDate,
+            totalPrice: reservationData.totalPrice,
+        },
+        { uid: user.id, email: user.email }
+    );
 
-  return newReservationId;
+    return docRef.id;
 }
 
 /**
  * Bir rezervasyonu günceller.
  */
-export async function updateReservation(id: string, reservationData: Partial<Reservation>): Promise<void> {
-  await reservationService.update(id, reservationData);
+export async function updateReservation(id: string, reservationData: Partial<Omit<Reservation, 'id'>>): Promise<void> {
+    const docRef = doc(db, "reservations", id);
+    await updateDoc(docRef, {
+        ...reservationData,
+        updatedAt: Timestamp.now(),
+    });
 }
 
 /**
  * Bir rezervasyonu siler.
  */
 export async function deleteReservation(id: string, user: { id: string; email: string | null }): Promise<void> {
-  // Silmeden önce rezervasyon bilgilerini alarak loglama için sakla
-  const reservationToDelete = await reservationService.get(id);
-  if (!reservationToDelete) {
-    console.error(`Silinecek rezervasyon bulunamadı: ${id}`);
-    // İsteğe bağlı olarak burada bir hata fırlatılabilir
-    // throw new Error('Reservation not found');
-    return; // Rezervasyon yoksa işlemi sonlandır
-  }
-
-  await reservationService.delete(id);
-
-  // Log kaydı oluştur
-  await createLog(
-    'warn',
-    `Rezervasyon silindi (ID: ${id})`,
-    {
-      guestId: reservationToDelete.guestId,
-      roomId: reservationToDelete.roomId,
-      checkIn: reservationToDelete.checkInDate,
-      checkOut: reservationToDelete.checkOutDate,
-    },
-    { uid: user.id, email: user.email }
-  );
-}
-
-/**
- * Bir rezervasyonun durumunu günceller.
- */
-export async function updateReservationStatus(id: string, status: Reservation['status']): Promise<void> {
-  await reservationService.update(id, { status });
-}
-
-/**
- * Belirli bir rezervasyonu misafir detaylarıyla birlikte getirir.
- */
-export async function getReservationWithGuestDetails(reservationId: string): Promise<{ reservation: Reservation; guest: Guest | null } | null> {
-  try {
-    const reservation = await reservationService.get(reservationId);
-    if (!reservation) {
-      return null;
+    const reservationToDelete = await getReservationById(id);
+    if (!reservationToDelete) {
+        throw new Error(`Silinecek rezervasyon bulunamadı: ${id}`);
     }
 
-    let guest: Guest | null = null;
-    if (reservation.guestId) {
-      guest = await getGuest(reservation.guestId);
-    }
+    const docRef = doc(db, "reservations", id);
+    await deleteDoc(docRef);
 
-    return { reservation, guest };
-  } catch (error) {
-    console.error("Error fetching reservation with guest details:", error);
-    throw new Error("Failed to retrieve reservation with guest details.");
-  }
+    // Log kaydı oluştur
+    await createLog(
+        'warn',
+        `Rezervasyon silindi (ID: ${id})`,
+        {
+            guestId: reservationToDelete.guestId,
+            roomId: reservationToDelete.roomId,
+            checkIn: reservationToDelete.checkInDate,
+            checkOut: reservationToDelete.checkOutDate,
+        },
+        { uid: user.id, email: user.email }
+    );
 }
 
-/**
- * Bir rezervasyonun ödeme durumunu günceller.
- */
-export async function updatePaymentStatus(id: string, paymentStatus: Reservation['paymentStatus']): Promise<void> {
-  await reservationService.update(id, { paymentStatus });
-}
-
-/**
- * Rezervasyon taşıma (sürükle-bırak) işlemi.
- */
-export async function moveReservation(id: string, newRoomId: string, newCheckInDate: Date, newCheckOutDate: Date): Promise<void> {
-  await reservationService.update(id, {
-    roomId: newRoomId,
-    checkInDate: newCheckInDate.toISOString(),
-    checkOutDate: newCheckOutDate.toISOString(),
-  });
-}
 
 /**
  * Rezervasyon istatistiklerini hesaplar.
  */
 export async function getReservationStatistics() {
-  const reservations = await getAllReservations();
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+    const reservationsCol = collection(db, 'reservations');
+    const querySnapshot = await getDocs(query(reservationsCol));
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-  const stats = {
-    total: reservations.length,
-    active: 0,
-    upcoming: 0,
-    completed: 0,
-    cancelled: 0,
-    revenue: { total: 0, paid: 0, pending: 0 },
-    occupancyRate: 0
-  };
+    const allRooms = await roomService.getAllRooms();
+    const totalRoomCount = allRooms.length;
 
-  reservations.forEach(r => {
-    stats.revenue.total += r.totalPrice;
-    if (r.paymentStatus === 'Ödendi') {
-      stats.revenue.paid += r.totalPrice;
-    } else if (r.paymentStatus === 'Bekliyor' || r.paymentStatus === 'Kısmi Ödeme') {
-      stats.revenue.pending += r.totalPrice;
+    const stats = {
+        total: 0,
+        active: 0,
+        upcoming: 0,
+        completed: 0,
+        revenue: {
+            total: 0,
+            paid: 0,
+            pending: 0
+        },
+        occupancyRate: 0
+    };
+
+    querySnapshot.forEach((doc) => {
+        const r = doc.data() as Reservation;
+        stats.total++;
+        stats.revenue.total += r.totalPrice || 0;
+        if (r.paymentStatus === 'Ödendi') {
+            stats.revenue.paid += r.totalPrice || 0;
+        } else {
+            stats.revenue.pending += r.totalPrice || 0;
+        }
+
+        const checkIn = new Date(r.checkInDate);
+        const checkOut = new Date(r.checkOutDate);
+
+        if (today >= checkIn && today < checkOut) {
+            stats.active++;
+        } else if (today < checkIn) {
+            stats.upcoming++;
+        } else if (today >= checkOut) {
+            stats.completed++;
+        }
+    });
+
+    if (totalRoomCount > 0) {
+        stats.occupancyRate = (stats.active / totalRoomCount) * 100;
     }
 
-    if (r.status === 'Tamamlandı' || r.status === 'Çıkış Yaptı') stats.completed++;
-    else if (r.status === 'İptal Edildi') stats.cancelled++;
-    else if (r.status === 'Onaylandı' || r.status === 'Giriş Yaptı') {
-      const checkIn = new Date(r.checkInDate);
-      const checkOut = new Date(r.checkOutDate);
-      if (checkIn <= today && checkOut > today) stats.active++;
-      else if (checkIn > today) stats.upcoming++;
-    }
-  });
-
-  const rooms = await roomService.getAll();
-  if (rooms.length > 0) {
-    // Aktif rezervasyonları (şu anda otelde olanlar) kullanarak doluluk oranını hesapla
-    stats.occupancyRate = (stats.active / rooms.length) * 100;
-  }
-
-  return stats;
+    return stats;
 }

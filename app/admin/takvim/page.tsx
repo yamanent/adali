@@ -26,41 +26,33 @@ export default function CalendarPage() {
       return;
     }
 
-    setIsLoading(true);
-
-    // Odaları bir kez yükle
-    const fetchRooms = async () => {
+    const fetchData = async () => {
+      setIsLoading(true);
       try {
-        // await initializeDefaultRooms(); // Bu script ile zaten yapıldı, tekrar gerek yok.
-        const allRooms = await getAllRooms();
-        setRooms(allRooms.map(room => ({ 
-          id: room.id, 
-          number: room.roomNumber, 
-          type: room.type
-        })));
+        // Odaları ve rezervasyonları aynı anda (paralel) yükle
+        const [roomsData, reservationsData] = await Promise.all([
+          getAllRooms(),
+          getAllReservations(),
+        ]);
+
+        setRooms(
+          roomsData.map((room) => ({
+            id: room.id,
+            number: room.roomNumber,
+            type: room.type,
+          }))
+        );
+        setReservations(reservationsData);
+
       } catch (error) {
-        console.error("Odalar yüklenirken hata:", error);
-        toast.error("Odalar yüklenirken bir hata oluştu.");
+        console.error("Veriler yüklenirken hata:", error);
+        toast.error("Veriler yüklenirken bir hata oluştu.");
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    fetchRooms();
-
-    // Rezervasyonları gerçek zamanlı dinle
-    const unsubscribe = getAllReservations(
-      (reservations: Reservation[]) => {
-        setReservations(reservations);
-        setIsLoading(false);
-      },
-      (error: Error) => {
-        console.error("Rezervasyonları dinlerken hata:", error);
-        toast.error("Rezervasyonlar güncellenirken bir hata oluştu.");
-        setIsLoading(false);
-      }
-    );
-
-    // Component unmount olduğunda dinleyiciyi kaldır
-    return () => unsubscribe();
+    fetchData();
   }, [router]);
 
   const handlePrevious = () => {

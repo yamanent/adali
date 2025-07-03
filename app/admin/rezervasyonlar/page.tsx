@@ -9,12 +9,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { collection, query } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 // Reservation ve Guest modellerini firebase-models'dan al
 import { Reservation, Guest, EnrichedReservation } from "@/lib/firebase-models";
 import {
   getAllReservations,
   deleteReservation,
-  updateReservationStatus, // Ekledik, gerekebilir
   // createReservation, updateReservation // Bunlar form içinde yönetiliyor artık
 } from "@/lib/reservation-service"; // reservation-service.ts kullanılıyor
 import { listGuests } from "@/lib/guest-service"; // Misafirleri çekmek için
