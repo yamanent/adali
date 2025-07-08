@@ -34,13 +34,9 @@ export interface User extends BaseModel {
 }
 
 /**
- * Odaların durumunu belirtir: müsait, dolu veya bakımda.
+ * Odaların durumunu belirtir.
  */
-export enum RoomStatus {
-  AVAILABLE = 'available',
-  OCCUPIED = 'occupied',
-  MAINTENANCE = 'maintenance',
-}
+export type RoomStatus = 'Müsait' | 'Dolu' | 'Bakımda' | 'Temizleniyor';
 
 /**
  * Otel odası veri modeli.
@@ -71,31 +67,40 @@ export interface Guest extends BaseModel {
 /**
  * Rezervasyonun mevcut durumunu belirtir.
  */
-export enum ReservationStatus {
-  PENDING = 'pending',       // Onay bekliyor
-  CONFIRMED = 'confirmed',   // Onaylandı
-  CHECKED_IN = 'checked-in', // Giriş yaptı
-  CHECKED_OUT = 'checked-out',// Çıkış yaptı
-  CANCELLED = 'cancelled',   // İptal edildi
-}
+export type ReservationStatus = 
+  'Onaylandı' | 
+  'Beklemede' | 
+  'İptal Edildi' | 
+  'Tamamlandı' | 
+  'Giriş Yaptı' | 
+  'Çıkış Yaptı' | 
+  'Gelmedi' |
+  'pending' |
+  'confirmed' |
+  'checked-in' |
+  'checked-out' |
+  'cancelled';
 
 /**
  * Ödeme durumunu belirtir.
  */
-export enum PaymentStatus {
-  UNPAID = 'unpaid',   // Ödenmedi
-  PARTIAL = 'partial', // Kısmi ödendi
-  PAID = 'paid',       // Tamamı ödendi
-}
+export type PaymentStatus = 'Bekliyor' | 'Kısmi Ödeme' | 'Ödendi' | 'İptal Edildi' | 'İade Edildi' | 'unpaid' | 'partial' | 'paid';
 
 /**
  * Rezervasyonun hangi kanaldan geldiğini belirtir.
  */
-export enum BookingSource {
-  DIRECT = 'direct', // Doğrudan (telefon, resepsiyon)
-  ONLINE = 'online', // Online (web sitesi)
-  AGENT = 'agent',   // Acente
-}
+export type BookingSource = 
+  'Doğrudan' | 
+  'Booking.com' | 
+  'Airbnb' | 
+  'Telefon' | 
+  'E-posta' | 
+  'Kapıdan' | 
+  'Sosyal Medya' | 
+  'Diğer' |
+  'direct' |
+  'online' |
+  'agent';
 
 /**
  * Rezervasyon veri modeli.
@@ -152,34 +157,11 @@ export interface Log extends BaseModel {
 
 
 
-// Rezervasyon durum değerleri
-export type ReservationStatus = 
-  'Onaylandı' | 
-  'Beklemede' | 
-  'İptal Edildi' | 
-  'Tamamlandı' | 
-  'Giriş Yaptı' | 
-  'Çıkış Yaptı' | 
-  'Gelmedi';
+// Rezervasyon durum değerleri artık yukarıda tanımlandı
 
-// Ödeme durum değerleri
-export type PaymentStatus = 
-  'Bekliyor' | 
-  'Ödendi' | 
-  'Kısmi Ödeme' | 
-  'İptal Edildi' | 
-  'İade Edildi';
+// Ödeme durum değerleri artık yukarıda tanımlandı
 
-// Rezervasyon kaynağı
-export type BookingSource = 
-  'Doğrudan' | 
-  'Booking.com' | 
-  'Airbnb' | 
-  'Telefon' | 
-  'E-posta' | 
-  'Kapıdan' | 
-  'Sosyal Medya' | 
-  'Diğer';
+// Rezervasyon kaynağı artık yukarıda tanımlandı
 
 // Temel rezervasyon modeli
 export interface Reservation {

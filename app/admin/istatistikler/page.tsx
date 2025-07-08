@@ -12,7 +12,9 @@ import { Expense } from "@/lib/models";
 import { getAllReservations, getReservationStatistics } from "@/lib/reservation-service";
 import { getAllExpenses, getExpensesByCategory, getTotalExpenses } from "@/lib/expenseService";
 import { useAuth } from "@/context/auth-context";
-import { UserRole } from "@/types/auth";
+// Admin ve Manager rolleri için sabit değerler
+const ADMIN_ROLE = 'ADMIN';
+const MANAGER_ROLE = 'MANAGER';
 import Unauthorized from "@/components/auth/unauthorized";
 
 export default function StatisticsPage() {
@@ -23,18 +25,18 @@ export default function StatisticsPage() {
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth());
   
   const router = useRouter();
-  // Tüm useAuth değerlerini tek seferde alıyoruz
-  const { isAuthenticated, user, hasPermission } = useAuth();
+  // useAuth hook'undan gerekli değerleri alıyoruz
+  const { user, hasPermission } = useAuth();
 
   useEffect(() => {
-    // Oturum kontrolü artık useAuth hook'u ile yapılıyor
-    if (!isAuthenticated) {
+    // Oturum kontrolü user objesi ile yapılıyor
+    if (!user) {
       router.push("/admin");
       return;
     }
 
     loadReservations();
-  }, [router, isAuthenticated]);
+  }, [router, user]);
 
   const loadReservations = async () => {
     try {
@@ -187,12 +189,12 @@ export default function StatisticsPage() {
   const paymentStatusRevenue = getPaymentStatusRevenue();
 
   // Rol kontrolü
-  if (!user || ![UserRole.ADMIN, UserRole.MANAGER].includes(user.role)) {
+  if (!user || ![ADMIN_ROLE, MANAGER_ROLE].includes(user.role)) {
     return <Unauthorized message="İstatistikler sayfasına erişim için yönetici veya admin yetkisi gereklidir." />;
   }
   
   // İzin kontrolü - ADMIN rolü için izin kontrolünü atlıyoruz
-  if (user.role !== UserRole.ADMIN && !hasPermission("view:statistics")) {
+  if (user.role !== ADMIN_ROLE && !hasPermission("view:statistics")) {
     return <Unauthorized message="İstatistikler görüntüleme izniniz bulunmamaktadır." />;
   }
   

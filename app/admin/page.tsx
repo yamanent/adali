@@ -19,24 +19,26 @@ import { useAuth } from "@/context/auth-context";
 export default function AdminLoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const { login, isLoading, isAuthenticated } = useAuth();
+  const { login, loading, user } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     // Kullanıcı zaten giriş yapmışsa dashboard'a yönlendir
-    if (isAuthenticated) {
+    if (user) {
       router.push("/admin/dashboard");
     }
-  }, [isAuthenticated, router]);
+  }, [user, router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Yeni auth sistemi ile giriş
-    const success = await login(username, password);
-    
-    if (success) {
-      router.push("/admin/dashboard");
+    try {
+      // Yeni auth sistemi ile giriş
+      await login(username, password);
+      // login başarılı olursa, useEffect user değişikliğini algılayıp yönlendirme yapacak
+      toast.success("Giriş başarılı");
+    } catch (error) {
+      toast.error("Giriş başarısız: " + (error instanceof Error ? error.message : "Bilinmeyen hata"));
     }
   };
 
@@ -93,9 +95,9 @@ export default function AdminLoginPage() {
               <Button 
                 type="submit" 
                 className="w-full bg-sage-600 hover:bg-sage-700 text-white" 
-                disabled={isLoading}
+                disabled={loading}
               >
-                {isLoading ? "Giriş Yapılıyor..." : "Giriş Yap"}
+                {loading ? "Giriş Yapılıyor..." : "Giriş Yap"}
               </Button>
             </CardFooter>
           </form>

@@ -13,8 +13,8 @@ import {
   orderBy,
   QueryConstraint,
 } from "firebase/firestore";
-import { db } from "./firebase";
-import { Reservation, Guest, Room } from "./firebase-models";
+import { db } from "./firebase/firebase-config";
+import { Reservation, Guest, Room, RoomStatus } from "./firebase-models";
 import { getGuest } from "./guest-service";
 import * as roomService from "./room-service";
 import { createLog } from './log-service';
@@ -98,7 +98,7 @@ export async function createReservation(
     });
 
     // Odanın durumunu 'dolu' olarak güncelle
-    await roomService.updateRoom(reservationData.roomId, { status: 'Dolu' });
+    await roomService.updateRoom(reservationData.roomId, { status: 'Dolu' as RoomStatus });
 
     // Log kaydı oluştur
     await createLog(
@@ -184,7 +184,7 @@ export async function getReservationStatistics() {
         const r = doc.data() as Reservation;
         stats.total++;
         stats.revenue.total += r.totalPrice || 0;
-        if (r.paymentStatus === 'Ödendi') {
+        if (r.paymentStatus === 'Ödendi' || r.paymentStatus === 'paid') {
             stats.revenue.paid += r.totalPrice || 0;
         } else {
             stats.revenue.pending += r.totalPrice || 0;

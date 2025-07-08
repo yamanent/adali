@@ -38,15 +38,13 @@ export default function ReservationsPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // TODO: Replace with proper AuthContext check and RoleGate/protected route
-    // Oturum kontrolü (AuthContext ile değiştirilecek)
-    const isLoggedIn = localStorage.getItem("adminLoggedIn");
-    if (isLoggedIn !== "true") {
+    // Firebase Authentication ile oturum kontrolü
+    if (!user) {
       router.push("/admin");
       return;
     }
     loadInitialData();
-  }, [router]);
+  }, [router, user]);
 
   const loadInitialData = async () => {
     setIsLoading(true);
@@ -77,7 +75,7 @@ export default function ReservationsPage() {
     }
     if (window.confirm("Bu rezervasyonu silmek istediğinize emin misiniz?")) {
       try {
-        await deleteReservation(id, { id: user.id, email: user.email });
+        await deleteReservation(id, { id: user.uid, email: user.email });
         toast.success("Rezervasyon başarıyla silindi.");
         loadInitialData(); // Veriyi yeniden yükle
       } catch (error) {

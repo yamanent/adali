@@ -1,5 +1,5 @@
 // lib/firebase-service.ts
-import { db } from './firebase';
+import { db } from './firebase/firebase-config';
 import {
   collection,
   doc,

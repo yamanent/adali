@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
-import { Guest } from "@/lib/firebase-service"; // Guest modeli firebase-service'den import edildi
+import { Guest } from "@/lib/firebase-models"; // Guest modeli firebase-models'dan import edildi
 import { createGuest, listGuests, updateGuest, deleteGuest, searchGuests } from "@/lib/guest-service"; // Guest service functions
 import { formatDate } from "@/lib/utils"; // Tarih formatlama fonksiyonu
 import { useAuth } from "@/context/auth-context"; // Auth context
@@ -34,15 +34,13 @@ export default function GuestsPage() {
   const { user } = useAuth();
 
   useEffect(() => {
-    // TODO: Replace with proper AuthContext check and RoleGate/protected route
-    // Basic auth check - replace with proper AuthContext later
-    const isLoggedIn = localStorage.getItem("adminLoggedIn");
-    if (isLoggedIn !== "true") {
+    // Firebase Authentication ile oturum kontrolü
+    if (!user) {
       router.push("/admin");
       return;
     }
     loadGuestsData();
-  }, [router]);
+  }, [router, user]);
 
   const loadGuestsData = async () => {
     setIsLoading(true);
@@ -76,7 +74,7 @@ export default function GuestsPage() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormState(prev => ({ ...prev, [name]: value }));
+    setFormState((prev: Partial<Guest>) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -92,7 +90,7 @@ export default function GuestsPage() {
     }
 
     try {
-      const userLog = { uid: user.id, email: user.email };
+      const userLog = { uid: user.uid, email: user.email || "" };
       if (currentGuest?.id) { // Editing existing guest
         await updateGuest(currentGuest.id, formState as Omit<Guest, 'id' | 'createdAt' | 'updatedAt'>, userLog);
         toast.success("Misafir başarıyla güncellendi.");
@@ -150,7 +148,7 @@ export default function GuestsPage() {
       return;
     }
     try {
-      await deleteGuest(guestId, { uid: user.id, email: user.email });
+      await deleteGuest(guestId, { uid: user.uid, email: user.email || "" });
       toast.success("Misafir başarıyla silindi.");
       loadGuestsData(); // Refresh the list
     } catch (error) {

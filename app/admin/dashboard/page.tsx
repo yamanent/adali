@@ -17,12 +17,11 @@ export default function AdminDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [latestLogs, setLatestLogs] = useState<Log[]>([]);
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   useEffect(() => {
-    // Oturum kontrolü
-    const isLoggedIn = localStorage.getItem("adminLoggedIn");
-    if (isLoggedIn !== "true") {
+    // Oturum kontrolü - Firebase Authentication kullanarak
+    if (!user) {
       router.push("/admin");
       return;
     }
@@ -41,14 +40,19 @@ export default function AdminDashboard() {
     };
 
     fetchDashboardData();
-  }, [router]);
+  }, [router, user]);
 
   // Dashboard için gerekli fonksiyonlar buraya eklenebilir
 
-  const handleLogout = () => {
-    localStorage.removeItem("adminLoggedIn");
-    toast.success("Çıkış yapıldı!");
-    router.push("/admin");
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success("Çıkış yapıldı!");
+      router.push("/admin");
+    } catch (error) {
+      console.error("Çıkış yapılırken hata oluştu:", error);
+      toast.error("Çıkış yapılırken bir hata oluştu.");
+    }
   };
 
   // Dashboard fonksiyonları buraya eklenebilir
