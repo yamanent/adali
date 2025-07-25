@@ -1,188 +1,124 @@
-"use client";
-
-import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
-import Image from 'next/image';
+import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { getBlogPostBySlug } from '@/lib/blog-service';
-import { BlogPost } from '@/lib/blog-models';
-import { Calendar, User, ArrowLeft } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react';
+import { blogPosts } from '@/data/blogPosts';
+import { parseDate } from '@/lib/blog-models';
+import BlogPostClient from './BlogPostClient';
+import type { BlogPost } from '@/lib/blog-models';
+
+// Tarih formatlama yardımcı fonksiyonu
+const formatDate = (date: Date | string | number): string => {
+  const parsedDate = parseDate(date);
+  return parsedDate.toLocaleDateString('tr-TR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+};
+
+// İçindekiler tablosu oluşturma
+const generateTableOfContents = (content: string) => {
+  const headings = content.match(/<h[23][^>]*>(.*?)<\/h[23]>/g) || [];
+  return headings.map(heading => {
+    const text = heading.replace(/<[^>]*>/g, '');
+    const level = heading.startsWith('<h2') ? 2 : 3;
+    const id = text.toLowerCase().replace(/[^\w]+/g, '-').replace(/^-+|-+$/g, '');
+    return { text, level, id };
+  });
+};
+
+// Sosyal medya paylaşım bağlantıları
+const getShareLinks = (title: string, url: string) => ({
+  facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
+  twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`,
+  linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`,
+  copy: url
+});
+
+interface RelatedPost {
+  slug: string;
+  title: string;
+  imageUrl?: string;
+  readTime: number;
+  createdAt: string;
+}
 
 export default function BlogPostPage({ params }: { params: { slug: string } }) {
-  const [post, setPost] = useState<BlogPost | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const post = blogPosts.find(post => post.slug === params.slug);
 
-  useEffect(() => {
-    const fetchPost = async () => {
-      try {
-        const fetchedPost = await getBlogPostBySlug(params.slug);
-        if (fetchedPost) {
-          setPost(fetchedPost);
-        } else {
-          setError("Blog yazısı bulunamadı.");
-        }
-      } catch (err) {
-        console.error("Blog yazısı yüklenirken hata oluştu:", err);
-        setError("Blog yazısı yüklenirken bir hata oluştu.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPost();
-  }, [params.slug]);
-
-  if (loading) {
-    return (
-      <div className="container mx-auto py-10 flex justify-center">
-        <div className="w-full max-w-3xl">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex justify-center">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
+  if (!post || !post.published) {
+    notFound();
   }
 
-  if (error || !post) {
-    return (
-      <div className="container mx-auto py-10 flex justify-center">
-        <div className="w-full max-w-3xl">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <h2 className="text-2xl font-bold text-red-500 mb-2">Hata</h2>
-                <p>{error || "Bilinmeyen bir hata oluştu."}</p>
-                <Button asChild className="mt-4">
-                  <Link href="/blog">Blog Sayfasına Dön</Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
+  const tableOfContents = generateTableOfContents(post.content);
+  
+  // İçerikteki başlıklara ID ekle
+  const formattedContent = post.content
+    .replace(/<h2[^>]*>([^<]+)<\/h2>/g, (match, text) => {
+      const id = text.toLowerCase().replace(/[^\w]+/g, '-').replace(/^-+|-+$/g, '');
+      return `<h2 id="${id}" class="scroll-mt-24 text-2xl font-bold mt-12 mb-4 pb-2 border-b border-gray-200">${text}</h2>`;
+    })
+    .replace(/<h3[^>]*>([^<]+)<\/h3>/g, (match, text) => {
+      const id = text.toLowerCase().replace(/[^\w]+/g, '-').replace(/^-+|-+$/g, '');
+      return `<h3 id="${id}" class="scroll-mt-24 text-xl font-semibold mt-8 mb-3">${text}</h3>`;
+    })
+    .replace(/<p/g, '<p class="mb-6 leading-relaxed text-gray-700"')
+    .replace(/<ul/g, '<ul class="list-disc pl-6 mb-6 space-y-2"')
+    .replace(/<ol/g, '<ol class="list-decimal pl-6 mb-6 space-y-2"')
+    .replace(/<blockquote/g, '<blockquote class="border-r-4 border-sage-200 pr-4 my-6 text-gray-600 italic"');
 
-  // SEO başlığı ve açıklaması için varsayılan değerleri kullan
-  const seoTitle = post.seoTitle || post.title;
-  const seoDescription = post.seoDescription || post.excerpt;
+  // İlgili yazıları bul (aynı kategoriden rastgele 2 yazı)
+  const relatedPosts: RelatedPost[] = blogPosts
+    .filter(p => p.slug !== post.slug && p.published && p.category === post.category)
+    .sort(() => 0.5 - Math.random())
+    .slice(0, 2)
+    .map(p => ({
+      slug: p.slug,
+      title: p.title,
+      imageUrl: p.imageUrl,
+      readTime: p.readTime || 5,
+      createdAt: formatDate(parseDate(p.createdAt))
+    }));
+
+  // Paylaşım bağlantıları
+  const shareLinks = getShareLinks(
+    post.title,
+    typeof window !== 'undefined' ? window.location.href : ''
+  );
 
   return (
-    <div className="container mx-auto py-10 flex justify-center">
-      <div className="w-full max-w-3xl">
-        <Card>
-          <CardContent className="pt-6">
-            {/* Kapak Görseli */}
-            {post.coverImageUrl && (
-              <div className="mb-6 -mx-6 -mt-6">
-                <Image 
-                  src={post.coverImageUrl} 
-                  alt={post.title} 
-                  width={1200} 
-                  height={600} 
-                  className="w-full object-cover h-[300px]"
-                />
-              </div>
-            )}
-            
-            {/* Başlık ve Meta Bilgiler */}
-            <h1 className="text-3xl font-bold mb-4">{post.title}</h1>
-            
-            <div className="flex flex-wrap items-center text-sm text-gray-500 mb-6 gap-4">
-              <div className="flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-                <span>{post.author}</span>
-              </div>
-              
-              <div className="flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                <span>{new Date(post.createdAt.toDate()).toLocaleDateString('tr-TR')}</span>
-              </div>
-              
-              {post.readTime && (
-                <div className="flex items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span>{post.readTime} dakika okuma</span>
-                </div>
-              )}
-              
-              {post.category && (
-                <div className="flex items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                  </svg>
-                  <span>{post.category}</span>
-                </div>
-              )}
-            </div>
-            
-            {/* Özet */}
-            {post.excerpt && (
-              <div className="mb-6 bg-gray-50 p-4 rounded-md border-l-4 border-primary italic">
-                {post.excerpt}
-              </div>
-            )}
-            
-            {/* Ana Görsel */}
-            {post.imageUrl && (
-              <div className="mb-6">
-                <Image 
-                  src={post.imageUrl} 
-                  alt={post.title} 
-                  width={800} 
-                  height={400} 
-                  className="rounded-md w-full object-cover"
-                />
-              </div>
-            )}
-            
-            {/* İçerik */}
-            <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: post.content }} />
-            
-            {/* Etiketler */}
-            {post.tags && post.tags.length > 0 && (
-              <div className="mt-8 pt-4 border-t">
-                <div className="flex flex-wrap gap-2">
-                  {post.tags.map((tag, index) => (
-                    <span key={index} className="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            {/* Geri Dön Butonu */}
-            <div className="mt-8 pt-4 border-t">
-              <Button asChild variant="outline">
-                <Link href="/blog">← Tüm Yazılar</Link>
-              </Button>
-            </div>
+    <div className="container mx-auto px-4 py-12 max-w-6xl">
+      <Button asChild variant="ghost" className="text-sage-700 hover:bg-sage-50 mb-8">
+        <Link href="/blog" className="flex items-center">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Tüm Yazılar
+        </Link>
+      </Button>
 
-          </CardContent>
-        </Card>
-        <div className="mt-8 text-center">
-          <Button asChild variant="outline" className="text-sage-600">
-            <Link href="/blog" className="flex items-center">
-              <ArrowLeft className="w-4 h-4 mr-2" /> Tüm Yazılara Dön
-            </Link>
-          </Button>
-        </div>
-      </div>
+      <BlogPostClient 
+        title={post.title}
+        content={formattedContent}
+        tableOfContents={tableOfContents}
+        relatedPosts={relatedPosts}
+        shareLinks={shareLinks}
+        post={{
+          ...post,
+          author: post.author || 'Yazar',
+          readTime: post.readTime || 5,
+          excerpt: post.excerpt || '',
+          createdAt: formatDate(parseDate(post.createdAt))
+        }}
+      />
     </div>
   );
+}
+
+// Statik üretim için yolları oluştur
+export async function generateStaticParams() {
+  return blogPosts
+    .filter(post => post.published)
+    .map((post) => ({
+      slug: post.slug,
+    }));
 }

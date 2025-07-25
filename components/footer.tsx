@@ -1,4 +1,4 @@
-"use client"
+ "use client"
 
 import Link from "next/link"
 import Image from "next/image"
@@ -136,6 +136,37 @@ export default function Footer() {
                 Kullanım Koşulları
               </Link>
             </div>
+          </div>
+        </div>
+
+        {/* SEO Links */}
+        <div className="mt-8 pt-6 border-t border-sage-800">
+          <div className="flex flex-wrap gap-2 justify-center text-xs text-sage-400">
+            <a href="https://www.adalipansiyonedirne.com/">Edirne Merkez pansiyon</a><span> | </span>
+            <a href="https://www.adalipansiyonedirne.com/">Edirne Merkez konaklama</a><span> | </span>
+            <a href="https://www.adalipansiyonedirne.com/">Edirne Merkez butik otel</a><span> | </span>
+            <a href="https://www.adalipansiyonedirne.com/">Edirne Merkez en iyi pansiyonlar</a><span> | </span>
+            <a href="https://www.adalipansiyonedirne.com/">Edirne Merkez uygun fiyatlı konaklama</a><span> | </span>
+            <a href="https://www.adalipansiyonedirne.com/">Edirne Merkez merkezde pansiyon</a><span> | </span>
+            <a href="https://www.adalipansiyonedirne.com/">Edirne Merkez otel fiyatları</a><span> | </span>
+            <a href="https://www.adalipansiyonedirne.com/">Edirne Merkez konaklama yerleri</a><span> | </span>
+            <a href="https://www.adalipansiyonedirne.com/">Edirne Merkez aile pansiyonu</a><span> | </span>
+            <a href="https://www.adalipansiyonedirne.com/">Edirne Merkez aile için pansiyon</a><span> | </span>
+            <a href="https://www.adalipansiyonedirne.com/">Edirne Merkez muhafazakar pansiyon</a><span> | </span>
+            <a href="https://www.adalipansiyonedirne.com/">Edirne Merkez kahvaltı dahil pansiyon</a><span> | </span>
+            <a href="https://www.adalipansiyonedirne.com/">Edirne Merkez otoparklı pansiyon</a><span> | </span>
+            <a href="https://www.adalipansiyonedirne.com/">Edirne Merkez ekonomik konaklama</a><span> | </span>
+            <a href="https://www.adalipansiyonedirne.com/">Edirne Merkez şehir merkezi pansiyon</a><span> | </span>
+            <a href="https://www.adalipansiyonedirne.com/">Edirne Merkez temiz pansiyon</a><span> | </span>
+            <a href="https://www.adalipansiyonedirne.com/">Edirne Merkez huzurlu konaklama</a><span> | </span>
+            <a href="https://www.adalipansiyonedirne.com/">Edirne Merkez öğrenci pansiyonu</a><span> | </span>
+            <a href="https://www.adalipansiyonedirne.com/">Edirne Merkez iş seyahati konaklama</a><span> | </span>
+            <a href="https://www.adalipansiyonedirne.com/">Edirne Merkez güvenilir pansiyon</a><span> | </span>
+            <a href="https://www.adalipansiyonedirne.com/">Edirne Merkez gezilecek yerlere yakın</a><span> | </span>
+            <a href="https://www.adalipansiyonedirne.com/">Edirne Merkez rezervasyon</a><span> | </span>
+            <a href="https://www.adalipansiyonedirne.com/">Edirne Merkez oda fiyatları</a><span> | </span>
+            <a href="https://www.adalipansiyonedirne.com/">Edirne Merkez pansiyon yorumları</a><span> | </span>
+            <a href="https://www.adalipansiyonedirne.com/">Edirne Merkez konforlu pansiyon</a>
           </div>
         </div>
       </div>
